@@ -96,6 +96,7 @@ function initFacebookPixel(pixelIds: string[]): TrackingEventFunction {
 const BASE_API_URL = () => {
     try {
         const isDev =
+            // @ts-ignore
             (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
             (typeof process !== "undefined" && process.env?.NODE_ENV !== "production");
 
