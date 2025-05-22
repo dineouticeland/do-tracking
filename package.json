@@ -1,0 +1,34 @@
+{
+  "name": "do-tracking",
+  "version": "1.0.0",
+  "description": "Multi-tenant tracking loader for Dineout using GA4, GTM, and FB Pixel",
+  "license": "ISC",
+  "author": "Adam The Tracking Wizard",
+  "type": "module",
+  "main": "dist/DineoutTracking.js",
+  "types": "dist/DineoutTracking.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "vite serve src/example",
+    "prepare": "npm run build"
+  },
+  "peerDependencies": {
+    "react": "^17 || ^18 || ^19"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dineouticeland/do-tracking.git"
+  },
+  "devDependencies": {
+    "@types/gtag.js": "^0.0.20",
+    "@types/node": "^22.15.21",
+    "@types/react": "^19.1.5",
+    "@types/react-dom": "^19.1.5",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  },
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  }
+}
