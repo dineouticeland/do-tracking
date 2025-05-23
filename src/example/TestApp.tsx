@@ -43,7 +43,6 @@ export default function TestApp() {
                             </button>
                         </div>
                         <DineoutTracking companyIdentifier={companyIdentifier}/>
-
                     </>
                 )}
             </div>

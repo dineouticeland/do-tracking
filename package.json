@@ -1,6 +1,6 @@
 {
   "name": "do-tracking",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Multi-tenant tracking loader for Dineout using GA4, GTM, and FB Pixel",
   "license": "ISC",
   "author": "Adam The Tracking Wizard",
