@@ -70,11 +70,15 @@ declare global {
     interface Window {
         dataLayer: Record<string, any>[];
         gtag: Gtag.Gtag;
-        dineoutTrackingIntegrations?: TrackingEventFunction[];
         sendDineoutEvent?: TrackingEventFunction;
         fbq: Fbq;
     }
 }
+/**
+ * Sends an event to all the added integrations via this package.
+ * @param event
+ * @param data
+ */
 export declare const sendDineoutEvent: TrackingEventFunction;
 export declare function DineoutTracking({ companyIdentifier }: {
     companyIdentifier: string;

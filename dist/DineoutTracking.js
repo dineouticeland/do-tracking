@@ -1,5 +1,13 @@
 'use client';
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+// Disable if you don't want the logs boy
+const verbose = true;
+const currentVersion = '1.1.2';
+const trackLog = (info) => {
+    if (verbose) {
+        console.info(`[DoTracking ${currentVersion}]`, info);
+    }
+};
 function mapFacebookToGA4(event, data) {
     switch (event) {
         case 'AddPaymentInfo':
@@ -40,11 +48,30 @@ function mapFacebookToGA4(event, data) {
             return { event: event.toLowerCase() };
     }
 }
-function injectScript(src, async = true) {
+let DO_TRACKING_INTEGRATIONS = [];
+/**
+ * Sends an event to all the added integrations via this package.
+ * @param event
+ * @param data
+ */
+export const sendDineoutEvent = (event, data) => {
+    DO_TRACKING_INTEGRATIONS.forEach((fn) => fn(event, data));
+};
+const loadedScripts = new Set();
+function injectScriptOnce(src, async = true) {
+    // Avoid identical scripts
+    if (loadedScripts.has(src) || document.querySelector(`script[src="${src}"]`)) {
+        return false;
+    }
+    // Avoid multiple FB Pixel tags
+    if (Array.from(document.scripts).some(s => s.src.includes('fbevents.js'))) {
+        return false;
+    }
     const script = document.createElement("script");
     script.src = src;
     script.async = async;
     document.head.appendChild(script);
+    loadedScripts.add(src);
 }
 function initGA4(measurementId) {
     window.dataLayer = window.dataLayer || [];
@@ -52,24 +79,29 @@ function initGA4(measurementId) {
         window.gtag = function () {
             window.dataLayer.push(arguments);
         };
-        injectScript(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`);
+        injectScriptOnce(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`);
         window.gtag("js", new Date());
     }
     window.gtag("config", measurementId);
-    return (event, data) => {
+    trackLog(`Added GA4 with MeasurementId: ${measurementId}`);
+    DO_TRACKING_INTEGRATIONS.push((event, data) => {
+        trackLog(`Sending event to GA4 ${event}`);
         const mapped = mapFacebookToGA4(event, data);
         window.gtag("event", mapped.event, mapped.data);
-    };
+    });
 }
 function initGTM(containerId) {
+    injectScriptOnce(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
     window.dataLayer = window.dataLayer || [];
-    injectScript(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
-    return (event, data) => {
+    window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
+    trackLog(`Added GTM with ContainerId: ${containerId}`);
+    DO_TRACKING_INTEGRATIONS.push((event, data) => {
+        trackLog(`Sending event to GTM ${event}`);
         const mapped = mapFacebookToGA4(event, data);
         window.dataLayer.push({ event: mapped.event, data: mapped.data });
-    };
+    });
 }
-function initFacebookPixel(pixelIds) {
+function initFacebookPixel(pixelId) {
     if (!window.fbq || !window.fbq.loaded) {
         const fbq = function () {
             if (fbq.callMethod) {
@@ -83,25 +115,20 @@ function initFacebookPixel(pixelIds) {
         fbq.loaded = true;
         fbq.queue = [];
         window.fbq = fbq;
-        injectScript("https://connect.facebook.net/en_US/fbevents.js");
+        injectScriptOnce("https://connect.facebook.net/en_US/fbevents.js");
     }
-    pixelIds.forEach((id) => {
-        try {
-            window.fbq("init", id.trim());
-        }
-        catch (err) {
-            console.warn("FB Pixel init failed for ID:", id, err);
-        }
-    });
+    window.fbq("init", pixelId);
+    trackLog(`Added Facebook Pixel with Id: ${pixelId}`);
     window.fbq("track", "PageView");
-    return (event, data) => {
+    DO_TRACKING_INTEGRATIONS.push((event, data) => {
+        trackLog(`Sending event to Pixel ${event}`);
         if (event === 'Custom') {
             window.fbq("trackCustom", event, data);
         }
         else {
             window.fbq('track', event, data);
         }
-    };
+    });
 }
 const BASE_API_URL = () => {
     var _a, _b;
@@ -126,34 +153,24 @@ async function fetchTrackingConfig(companyIdentifier) {
         return {};
     return res.json();
 }
-const DO_TRACKING_INTEGRATIONS = [];
-export const sendDineoutEvent = (event, data) => {
-    DO_TRACKING_INTEGRATIONS.forEach((fn) => fn(event, data));
-};
-let hasInitialized = false;
 export function DineoutTracking({ companyIdentifier }) {
+    const [init, setInit] = useState(false);
     useEffect(() => {
-        if (hasInitialized)
+        if (init)
             return;
-        hasInitialized = true;
-        fetchTrackingConfig(companyIdentifier).then((config) => {
-            if (config.gaTrackingId) {
-                console.info("Dineout Tracker", `Initialising GA4 ${config.gaTrackingId}`);
-                DO_TRACKING_INTEGRATIONS.push(initGA4(config.gaTrackingId));
-            }
-            if (config.gTagId) {
-                console.info("Dineout Tracker", `Initialising GTag ${config.gTagId}`);
-                DO_TRACKING_INTEGRATIONS.push(initGTM(config.gTagId));
-            }
-            if (config.fbPixelId) {
-                const pixelIds = config.fbPixelId.split(",");
-                console.info("Dineout Tracker", `Initialising Pixels ${pixelIds}`);
-                DO_TRACKING_INTEGRATIONS.push(initFacebookPixel(pixelIds));
-            }
-            window.dineoutTrackingIntegrations = DO_TRACKING_INTEGRATIONS;
-            window.sendDineoutEvent = sendDineoutEvent;
-        });
-    }, []); // Empty dependency array = run once only
+        if ((companyIdentifier === null || companyIdentifier === void 0 ? void 0 : companyIdentifier.length) > 0) {
+            setInit(true);
+            fetchTrackingConfig(companyIdentifier).then((config) => {
+                var _a, _b, _c;
+                trackLog('Clearing integrations');
+                DO_TRACKING_INTEGRATIONS = [];
+                (_a = config.gaTrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(initGA4);
+                (_b = config.gTagId) === null || _b === void 0 ? void 0 : _b.split(',').map(id => id.trim()).forEach(initGTM);
+                (_c = config.fbPixelId) === null || _c === void 0 ? void 0 : _c.split(',').map(id => id.trim()).forEach(initFacebookPixel);
+            });
+        }
+        window.sendDineoutEvent = sendDineoutEvent;
+    }, [init, companyIdentifier]);
     return null;
 }
 //# sourceMappingURL=DineoutTracking.js.map

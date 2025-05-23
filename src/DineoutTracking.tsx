@@ -1,10 +1,10 @@
 'use client';
 
-import {useEffect} from "react";
+import {useEffect, useState} from "react";
 
 // Disable if you don't want the logs boy
 const verbose = true;
-const currentVersion = '1.1.1';
+const currentVersion = '1.1.2';
 
 const trackLog = (info: string) => {
     if (verbose) {
@@ -232,8 +232,11 @@ async function fetchTrackingConfig(companyIdentifier: string): Promise<TrackingC
 }
 
 export function DineoutTracking({companyIdentifier}: { companyIdentifier: string }) {
+    const [init, setInit] = useState(false);
     useEffect(() => {
+        if (init) return;
         if (companyIdentifier?.length > 0) {
+            setInit(true);
             fetchTrackingConfig(companyIdentifier).then((config) => {
                 trackLog('Clearing integrations');
                 DO_TRACKING_INTEGRATIONS = [];
@@ -243,7 +246,7 @@ export function DineoutTracking({companyIdentifier}: { companyIdentifier: string
             });
         }
         window.sendDineoutEvent = sendDineoutEvent;
-    }, [companyIdentifier]);
+    }, [init, companyIdentifier]);
 
     return null;
 }
