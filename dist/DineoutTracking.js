@@ -1,4 +1,44 @@
 import { useEffect } from "react";
+function mapFacebookToGA4(event, data) {
+    switch (event) {
+        case 'AddPaymentInfo':
+            return { event: 'add_payment_info' };
+        case 'AddToCart':
+            return { event: 'add_to_cart' };
+        case 'AddToWishlist':
+            return { event: 'add_to_wishlist' };
+        case 'CompleteRegistration':
+            return { event: 'sign_up' };
+        case 'Contact':
+            return { event: 'contact' };
+        case 'CustomizeProduct':
+            return { event: 'select_item' };
+        case 'Donate':
+            return { event: 'donate' };
+        case 'FindLocation':
+            return { event: 'view_location' };
+        case 'InitiateCheckout':
+            return { event: 'begin_checkout' };
+        case 'Lead':
+            return { event: 'generate_lead' };
+        case 'Purchase':
+            return { event: 'purchase', data };
+        case 'Search':
+            return { event: 'search' };
+        case 'StartTrial':
+            return { event: 'start_trial', data };
+        case 'SubmitApplication':
+            return { event: 'submit_application' };
+        case 'Subscribe':
+            return { event: 'subscribe', data };
+        case 'ViewContent':
+            return { event: 'view_item' };
+        case 'Custom':
+            return { event: (data === null || data === void 0 ? void 0 : data.name) || 'custom_event', data };
+        default:
+            return { event: event.toLowerCase() };
+    }
+}
 function injectScript(src, async = true) {
     const script = document.createElement("script");
     script.src = src;
@@ -16,14 +56,16 @@ function initGA4(measurementId) {
     }
     window.gtag("config", measurementId);
     return (event, data) => {
-        window.gtag("event", event, data);
+        const mapped = mapFacebookToGA4(event, data);
+        window.gtag("event", mapped.event, mapped.data);
     };
 }
 function initGTM(containerId) {
     window.dataLayer = window.dataLayer || [];
     injectScript(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
     return (event, data) => {
-        window.dataLayer.push(Object.assign({ event }, data));
+        const mapped = mapFacebookToGA4(event, data);
+        window.dataLayer.push({ event: mapped.event, data: mapped.data });
     };
 }
 function initFacebookPixel(pixelIds) {
@@ -52,7 +94,12 @@ function initFacebookPixel(pixelIds) {
     });
     window.fbq("track", "PageView");
     return (event, data) => {
-        window.fbq("trackCustom", event, data);
+        if (event === 'Custom') {
+            window.fbq("trackCustom", event, data);
+        }
+        else {
+            window.fbq('track', event, data);
+        }
     };
 }
 const BASE_API_URL = () => {
@@ -79,7 +126,7 @@ async function fetchTrackingConfig(companyIdentifier) {
     return res.json();
 }
 const DO_TRACKING_INTEGRATIONS = [];
-export const sendDineoutEvent = (event, data = {}) => {
+export const sendDineoutEvent = (event, data) => {
     DO_TRACKING_INTEGRATIONS.forEach((fn) => fn(event, data));
 };
 let hasInitialized = false;

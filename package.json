@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dineouticeland/do-tracking.git"
+    "url": "git+https://github.com/dineouticeland/do-tracking.git"
   },
   "devDependencies": {
     "@types/gtag.js": "^0.0.20",
