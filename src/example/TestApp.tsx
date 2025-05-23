@@ -21,10 +21,25 @@ export default function TestApp() {
                 {companyIdentifier && initialised && (
                     <>
                         <div>
-                            <button onClick={() => sendDineoutEvent('testIntegration', {
-                                'local': true,
-                                'date': new Date().toISOString(),
-                            })}>Send Integration Test Event
+                            <button onClick={() => sendDineoutEvent('Purchase', {
+                                value: 29,
+                                currency: 'USD'
+                            })}>
+                                Send Purchase Event
+                            </button>
+
+                            <button onClick={() => sendDineoutEvent('AddToCart', undefined)}>
+                                Send Add to Cart
+                            </button>
+
+                            <button onClick={() => sendDineoutEvent('Custom', {
+                                meta: {
+                                    name: 'Adam',
+                                    age: 34,
+                                    position: 'Junior piece of sh|t dev'
+                                }
+                            })}>
+                                Send Custom Event
                             </button>
                         </div>
                         <DineoutTracking companyIdentifier={companyIdentifier}/>

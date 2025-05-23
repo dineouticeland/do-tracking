@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import {useEffect} from "react";
 
 export type TrackingConfig = {
     fbPixelId?: string | null;
@@ -6,11 +6,81 @@ export type TrackingConfig = {
     gaTrackingId?: string | null;
 };
 
-export type TrackingEventFunction = (event: string, data?: Record<string, any>) => void;
+export type TrackMethod =
+    | { event: 'AddPaymentInfo' }
+    | { event: 'AddToCart' }
+    | { event: 'AddToWishlist' }
+    | { event: 'CompleteRegistration' }
+    | { event: 'Contact' }
+    | { event: 'CustomizeProduct' }
+    | { event: 'Donate' }
+    | { event: 'FindLocation' }
+    | { event: 'InitiateCheckout' }
+    | { event: 'Lead' }
+    | { event: 'Purchase'; payload: { value: number; currency: string; } }
+    | { event: 'Search'; }
+    | { event: 'StartTrial'; payload: { value: number; currency: string; predicted_ltv: number; } }
+    | { event: 'SubmitApplication'; }
+    | { event: 'Subscribe'; payload: { value: number; currency: string; predicted_ltv: number; } }
+    | { event: 'ViewContent'; }
+    | { event: 'Custom'; payload: Record<string, any> }
+    ;
+
+// Get all events
+type EventMap = {
+    [T in TrackMethod as T['event']]: T extends { payload: infer P } ? P : undefined;
+};
+
+type TrackingEventFunction = <T extends keyof EventMap>(
+    event: T,
+    data: EventMap[T] extends undefined ? undefined : EventMap[T]
+) => void;
+
+function mapFacebookToGA4(event: TrackMethod['event'], data: any): { event: string; data?: Record<string, any> } {
+    switch (event) {
+        case 'AddPaymentInfo':
+            return {event: 'add_payment_info'};
+        case 'AddToCart':
+            return {event: 'add_to_cart'};
+        case 'AddToWishlist':
+            return {event: 'add_to_wishlist'};
+        case 'CompleteRegistration':
+            return {event: 'sign_up'};
+        case 'Contact':
+            return {event: 'contact'};
+        case 'CustomizeProduct':
+            return {event: 'select_item'};
+        case 'Donate':
+            return {event: 'donate'};
+        case 'FindLocation':
+            return {event: 'view_location'};
+        case 'InitiateCheckout':
+            return {event: 'begin_checkout'};
+        case 'Lead':
+            return {event: 'generate_lead'};
+        case 'Purchase':
+            return {event: 'purchase', data};
+        case 'Search':
+            return {event: 'search'};
+        case 'StartTrial':
+            return {event: 'start_trial', data};
+        case 'SubmitApplication':
+            return {event: 'submit_application'};
+        case 'Subscribe':
+            return {event: 'subscribe', data};
+        case 'ViewContent':
+            return {event: 'view_item'};
+        case 'Custom':
+            return {event: data?.name || 'custom_event', data};
+        default:
+            return {event: (event as string).toLowerCase()};
+    }
+}
 
 declare global {
     interface Fbq {
         (...args: any[]): void;
+
         callMethod?: (...args: any[]) => void;
         queue?: any[];
         version?: string;
@@ -47,7 +117,8 @@ function initGA4(measurementId: string): TrackingEventFunction {
     window.gtag("config", measurementId);
 
     return (event, data) => {
-        window.gtag("event", event, data);
+        const mapped = mapFacebookToGA4(event, data);
+        window.gtag("event", mapped.event, mapped.data);
     };
 }
 
@@ -56,7 +127,8 @@ function initGTM(containerId: string): TrackingEventFunction {
     injectScript(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
 
     return (event, data) => {
-        window.dataLayer.push({ event, ...data });
+        const mapped = mapFacebookToGA4(event, data);
+        window.dataLayer.push({event: mapped.event, data: mapped.data});
     };
 }
 
@@ -89,7 +161,11 @@ function initFacebookPixel(pixelIds: string[]): TrackingEventFunction {
     window.fbq("track", "PageView");
 
     return (event, data) => {
-        window.fbq("trackCustom", event, data);
+        if (event === 'Custom') {
+            window.fbq("trackCustom", event, data);
+        } else {
+            window.fbq('track', event, data);
+        }
     };
 }
 
@@ -119,13 +195,13 @@ async function fetchTrackingConfig(companyIdentifier: string): Promise<TrackingC
 
 const DO_TRACKING_INTEGRATIONS: TrackingEventFunction[] = [];
 
-export const sendDineoutEvent = (event: string, data: Record<string, any> = {}) => {
+export const sendDineoutEvent: TrackingEventFunction = (event, data) => {
     DO_TRACKING_INTEGRATIONS.forEach((fn) => fn(event, data));
 };
 
 let hasInitialized = false;
 
-export function DineoutTracking({ companyIdentifier }: { companyIdentifier: string }) {
+export function DineoutTracking({companyIdentifier}: { companyIdentifier: string }) {
     useEffect(() => {
         if (hasInitialized) return;
         hasInitialized = true;
