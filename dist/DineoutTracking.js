@@ -1,3 +1,4 @@
+'use client';
 import { useEffect } from "react";
 function mapFacebookToGA4(event, data) {
     switch (event) {
