@@ -1,135 +1,68 @@
 'use client';
 import { useEffect, useState } from "react";
-// Disable if you don't want the logs boy
-const verbose = true;
-const currentVersion = '1.1.2';
-const trackLog = (info) => {
-    if (verbose) {
-        console.info(`[DoTracking ${currentVersion}]`, info);
-    }
-};
-function mapFacebookToGA4(event, data) {
-    switch (event) {
-        case 'AddPaymentInfo':
-            return { event: 'add_payment_info' };
-        case 'AddToCart':
-            return { event: 'add_to_cart' };
-        case 'AddToWishlist':
-            return { event: 'add_to_wishlist' };
-        case 'CompleteRegistration':
-            return { event: 'sign_up' };
-        case 'Contact':
-            return { event: 'contact' };
-        case 'CustomizeProduct':
-            return { event: 'select_item' };
-        case 'Donate':
-            return { event: 'donate' };
-        case 'FindLocation':
-            return { event: 'view_location' };
-        case 'InitiateCheckout':
-            return { event: 'begin_checkout' };
-        case 'Lead':
-            return { event: 'generate_lead' };
-        case 'Purchase':
-            return { event: 'purchase', data };
-        case 'Search':
-            return { event: 'search' };
-        case 'StartTrial':
-            return { event: 'start_trial', data };
-        case 'SubmitApplication':
-            return { event: 'submit_application' };
-        case 'Subscribe':
-            return { event: 'subscribe', data };
-        case 'ViewContent':
-            return { event: 'view_item' };
-        case 'Custom':
-            return { event: (data === null || data === void 0 ? void 0 : data.name) || 'custom_event', data };
-        default:
-            return { event: event.toLowerCase() };
-    }
-}
-let DO_TRACKING_INTEGRATIONS = [];
+import { trackLog, detectPlatform, clearIntegrations, DO_TRACKING_INTEGRATIONS, mapEventName, initFacebookPixel, initGA4, initGTM, initMixpanel, trackToMixpanel, trackToGA4, trackToGTM, trackToFBPixel, identifyUser as identifyMixpanelUser, resetMixpanel, } from './integrations';
+// ============================================================================
+// UNIFIED TRACKING FUNCTION
+// ============================================================================
 /**
+ * Track an event across all platforms (Mixpanel, GA4, GTM, FB Pixel).
+ *
+ * - Mixpanel receives the descriptive event name (e.g., "Service Selected")
+ * - GA4/GTM receive the mapped event name (e.g., "add_to_cart")
+ * - FB Pixel receives the mapped event name with standard/custom handling
+ *
+ * @example
+ * dineoutTrack('Booking Flow Started');
+ * dineoutTrack('Service Selected', { serviceId: 'svc-1', serviceName: 'Haircut', price: 4500 });
+ * dineoutTrack('Booking Completed', { bookingId: 'b-123', totalAmount: 4500, currency: 'ISK' });
+ */
+export function dineoutTrack(event, ...args) {
+    const properties = args[0];
+    trackLog(`dineoutTrack: ${event}`);
+    // Get mapped event names for GA4/FB
+    const mapped = mapEventName(event);
+    // Send descriptive name to Mixpanel
+    trackToMixpanel(event, properties);
+    // Send mapped name to GA4
+    trackToGA4(mapped.ga4, properties);
+    // Send mapped name to GTM
+    trackToGTM(mapped.ga4, properties);
+    // Send mapped name to FB Pixel (standard or custom)
+    trackToFBPixel(mapped.fb, mapped.fbCustom, properties);
+}
+// ============================================================================
+// USER FUNCTIONS
+// ============================================================================
+/**
+ * Identify a user for tracking.
+ * Call this after the user enters their contact info or logs in.
+ * @param userId - Unique identifier for the user (e.g., phone, email, or user ID)
+ */
+export function identifyUser(userId) {
+    trackLog(`identifyUser: ${userId}`);
+    identifyMixpanelUser(userId);
+}
+/**
+ * Reset tracking state (useful for logout).
+ * Clears the current user identity and generates a new anonymous ID.
+ */
+export function reset() {
+    trackLog('reset');
+    resetMixpanel();
+}
+// ============================================================================
+// LEGACY SEND EVENT FUNCTION
+// ============================================================================
+/**
+ * @deprecated Use dineoutTrack instead
  * Sends an event to all the added integrations via this package.
- * @param event
- * @param data
  */
 export const sendDineoutEvent = (event, data) => {
     DO_TRACKING_INTEGRATIONS.forEach((fn) => fn(event, data));
 };
-const loadedScripts = new Set();
-function injectScriptOnce(src, async = true) {
-    // Avoid identical scripts
-    if (loadedScripts.has(src) || document.querySelector(`script[src="${src}"]`)) {
-        return false;
-    }
-    // Avoid multiple FB Pixel tags
-    if (Array.from(document.scripts).some(s => s.src.includes('fbevents.js'))) {
-        return false;
-    }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = async;
-    document.head.appendChild(script);
-    loadedScripts.add(src);
-}
-function initGA4(measurementId) {
-    window.dataLayer = window.dataLayer || [];
-    if (!window.gtag) {
-        window.gtag = function () {
-            window.dataLayer.push(arguments);
-        };
-        injectScriptOnce(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`);
-        window.gtag("js", new Date());
-    }
-    window.gtag("config", measurementId);
-    trackLog(`Added GA4 with MeasurementId: ${measurementId}`);
-    DO_TRACKING_INTEGRATIONS.push((event, data) => {
-        trackLog(`Sending event to GA4 ${event}`);
-        const mapped = mapFacebookToGA4(event, data);
-        window.gtag("event", mapped.event, mapped.data);
-    });
-}
-function initGTM(containerId) {
-    injectScriptOnce(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-    trackLog(`Added GTM with ContainerId: ${containerId}`);
-    DO_TRACKING_INTEGRATIONS.push((event, data) => {
-        trackLog(`Sending event to GTM ${event}`);
-        const mapped = mapFacebookToGA4(event, data);
-        window.dataLayer.push({ event: mapped.event, data: mapped.data });
-    });
-}
-function initFacebookPixel(pixelId) {
-    if (!window.fbq || !window.fbq.loaded) {
-        const fbq = function () {
-            if (fbq.callMethod) {
-                fbq.callMethod.apply(null, arguments);
-            }
-            else {
-                (fbq.queue = fbq.queue || []).push(arguments);
-            }
-        };
-        fbq.version = "2.0";
-        fbq.loaded = true;
-        fbq.queue = [];
-        window.fbq = fbq;
-        injectScriptOnce("https://connect.facebook.net/en_US/fbevents.js");
-    }
-    window.fbq("init", pixelId);
-    trackLog(`Added Facebook Pixel with Id: ${pixelId}`);
-    window.fbq("track", "PageView");
-    DO_TRACKING_INTEGRATIONS.push((event, data) => {
-        trackLog(`Sending event to Pixel ${event}`);
-        if (event === 'Custom') {
-            window.fbq("trackCustom", event, data);
-        }
-        else {
-            window.fbq('track', event, data);
-        }
-    });
-}
+// ============================================================================
+// API
+// ============================================================================
 const BASE_API_URL = () => {
     var _a, _b;
     try {
@@ -137,6 +70,7 @@ const BASE_API_URL = () => {
         // @ts-ignore
         (typeof import.meta !== "undefined" && ((_a = import.meta.env) === null || _a === void 0 ? void 0 : _a.DEV)) ||
             (typeof process !== "undefined" && ((_b = process.env) === null || _b === void 0 ? void 0 : _b.NODE_ENV) !== "production");
+        console.log('isDev', isDev);
         if (isDev) {
             console.info("[Tracking]", "Running in development mode");
             return "http://localhost:9876";
@@ -153,7 +87,10 @@ async function fetchTrackingConfig(companyIdentifier) {
         return {};
     return res.json();
 }
-export function DineoutTracking({ companyIdentifier }) {
+// ============================================================================
+// MAIN COMPONENT
+// ============================================================================
+export function DineoutTracking({ companyIdentifier, platform, userId }) {
     const [init, setInit] = useState(false);
     useEffect(() => {
         if (init)
@@ -163,14 +100,28 @@ export function DineoutTracking({ companyIdentifier }) {
             fetchTrackingConfig(companyIdentifier).then((config) => {
                 var _a, _b, _c;
                 trackLog('Clearing integrations');
-                DO_TRACKING_INTEGRATIONS = [];
+                clearIntegrations();
+                // Initialize Google integrations
                 (_a = config.gaTrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(initGA4);
                 (_b = config.gTagId) === null || _b === void 0 ? void 0 : _b.split(',').map(id => id.trim()).forEach(initGTM);
+                // Initialize Facebook Pixel
                 (_c = config.fbPixelId) === null || _c === void 0 ? void 0 : _c.split(',').map(id => id.trim()).forEach(initFacebookPixel);
+                // Initialize Mixpanel if token is present
+                if (config.mixpanelToken && config.companyId) {
+                    const resolvedPlatform = platform !== null && platform !== void 0 ? platform : detectPlatform();
+                    initMixpanel({
+                        token: config.mixpanelToken,
+                        companyId: config.companyId,
+                        platform: resolvedPlatform,
+                        userId,
+                    });
+                }
             });
         }
+        // Expose functions globally
+        window.dineoutTrack = dineoutTrack;
         window.sendDineoutEvent = sendDineoutEvent;
-    }, [init, companyIdentifier]);
+    }, [init, companyIdentifier, platform, userId]);
     return null;
 }
 //# sourceMappingURL=DineoutTracking.js.map
