@@ -1,6 +1,6 @@
 {
   "name": "do-tracking",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Multi-tenant tracking loader for Dineout/Sinna using GA4, GTM, FB Pixel, and Mixpanel",
   "license": "ISC",
   "author": "Adam The Tracking Wizard",

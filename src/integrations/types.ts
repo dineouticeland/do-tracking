@@ -3,7 +3,7 @@
 // ============================================================================
 
 export const verbose = true;
-export const currentVersion = '1.3.2';
+export const currentVersion = '1.3.3';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -50,6 +50,7 @@ export type BaseTrackEvent =
 
 export type SinnaBookingEvent =
     | { event: 'Booking Flow Started' }
+    | { event: 'Booking Step Viewed'; payload: { type:'scheduled' | 'service', step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept' } }
     | { event: 'Service Category Selected'; payload: { categoryId?: string; categoryName?: string } }
     | { event: 'Service Selected'; payload: { serviceId?: string; serviceName?: string; price?: number } }
     | { event: 'Service Variation Selected'; payload: { variationId?: string; variationName?: string } }
@@ -73,6 +74,7 @@ export type SinnaBookingEventMap = {
 
 export type DineoutReservationEvent =
     // Phase 1: Reservation selection (dineout.is)
+    | { event: 'Reservation Step Viewed'; payload: { step: 'date' | 'guest' | 'time' | 'checkout' | 'reciept' | 'checkout' | 'reciept' } }
     | { event: 'Reservation Flow Started'; payload: { flow_id: string; company_id: string; restaurant_id?: string; lng?: string; source?: string } }
     | { event: 'Reservation Date Selected'; payload: { flow_id: string; date: string } }
     | { event: 'Reservation Guests Selected'; payload: { flow_id: string; guests: number } }
@@ -121,6 +123,7 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     // Sinna Service Booking Flow
     // -------------------------------------------------------------------------
     'Booking Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Booking Step Viewed': { ga4: 'booking_step_viewed', fb: 'BookingStepViewed', fbCustom: true },
     'Service Category Selected': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
     'Service Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
     'Service Variation Selected': { ga4: 'service_variation', fb: 'ServiceVariationSelected', fbCustom: true },
@@ -139,6 +142,7 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     // -------------------------------------------------------------------------
     // Phase 1: Reservation selection (dineout.is)
     'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Step Viewed': { ga4: 'reservation_step_viewed', fb: 'ReservationStepViewed', fbCustom: true },
     'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
     'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
     'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
