@@ -6,6 +6,15 @@
 export type {
     Platform,
     TrackingConfig,
+    // Base event type
+    BaseTrackEvent,
+    // Sinna service booking events
+    SinnaBookingEvent,
+    SinnaBookingEventMap,
+    // Dineout reservation events
+    DineoutReservationEvent,
+    DineoutReservationEventMap,
+    // Combined event type
     TrackableEvent,
     TrackableEventMap,
     EventMapping,

@@ -37,25 +37,71 @@ export type TrackingConfig = {
 };
 
 // ============================================================================
-// UNIFIED TRACKABLE EVENTS
+// BASE EVENT TYPE
 // ============================================================================
 
-export type TrackableEvent =
-    // Booking funnel events
+export type BaseTrackEvent =
+    | { event: 'Custom'; payload: Record<string, any> }
+    ;
+
+// ============================================================================
+// SINNA SERVICE BOOKING EVENTS (book.sinna.is)
+// ============================================================================
+
+export type SinnaBookingEvent =
     | { event: 'Booking Flow Started' }
     | { event: 'Service Category Selected'; payload: { categoryId?: string; categoryName?: string } }
     | { event: 'Service Selected'; payload: { serviceId?: string; serviceName?: string; price?: number } }
     | { event: 'Service Variation Selected'; payload: { variationId?: string; variationName?: string } }
     | { event: 'Employee Selected'; payload: { employeeId?: string; employeeName?: string } }
     | { event: 'Time Slot Selected'; payload: { date?: string; time?: string } }
-    | { event: 'Customer Info Submitted'; payload: { email?: string; phone?: string } }
+    | { event: 'Customer Info Submitted'; payload: { hasEmail?: boolean; hasPhone?: boolean } }
     | { event: 'Payment Started'; payload: { amount?: number; currency?: string } }
+    | { event: 'Payment Failed'; payload: { provider?: string; error_code?: string, card_provider?: string } }
     | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string } }
-    // Generic/custom events
-    | { event: 'Custom'; payload: Record<string, any> }
+    | { event: 'Booking Failed'; payload: { bookingId?: string; totalAmount?: number; currency?: string; type?:string, reason?:string } }
     ;
 
-// Extract payload type for a given event
+// Extract payload type for Sinna events
+export type SinnaBookingEventMap = {
+    [T in SinnaBookingEvent as T['event']]: T extends { payload: infer P } ? P : undefined;
+};
+
+// ============================================================================
+// DINEOUT RESERVATION EVENTS (dineout.is -> booking.dineout.is)
+// ============================================================================
+
+export type DineoutReservationEvent =
+    // Phase 1: Reservation selection (dineout.is)
+    | { event: 'Reservation Flow Started'; payload: { flow_id: string; company_id: string; restaurant_id?: string; lng?: string; source?: string } }
+    | { event: 'Reservation Date Selected'; payload: { flow_id: string; date: string } }
+    | { event: 'Reservation Guests Selected'; payload: { flow_id: string; guests: number } }
+    | { event: 'Reservation Time Selected'; payload: { flow_id: string; dateTime: string; guests: number } }
+    | { event: 'Reservation Redirected To Checkout'; payload: { flow_id: string; target: string } }
+    // Phase 2: Checkout (booking.dineout.is)
+    | { event: 'Reservation Checkout Loaded'; payload: { flow_id: string; restaurant_id: string; dateTime: string; guests: number; lng?: string } }
+    | { event: 'Reservation Hold Started'; payload: { flow_id: string; hold_seconds?: number } }
+    | { event: 'Customer Details Submitted'; payload: { flow_id: string; has_email: boolean; has_phone: boolean; has_special_request: boolean } }
+    | { event: 'Payment Required Shown'; payload: { flow_id: string; required: boolean; amount?: number; currency?: string; reason?: string } }
+    | { event: 'Reservation Payment Started'; payload: { flow_id: string; amount: number; currency: string; provider?: string } }
+    | { event: 'Payment Failed'; payload: { flow_id: string; provider?: string; error_code?: string, card_provider?: string } }
+    | { event: 'Reservation Completed'; payload: { flow_id: string; reservation_id: string; amount_paid?: number; currency?: string; payment_required: boolean } }
+    | { event: 'Reservation Failed'; payload: { flow_id: string; reservation_id: string; type?:string, reason?:string } }
+    | { event: 'Reservation Hold Expired'; payload: { flow_id: string } }
+    ;
+
+// Extract payload type for Dineout events
+export type DineoutReservationEventMap = {
+    [T in DineoutReservationEvent as T['event']]: T extends { payload: infer P } ? P : undefined;
+};
+
+// ============================================================================
+// COMBINED TRACKABLE EVENT (union of all event types)
+// ============================================================================
+
+export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | BaseTrackEvent;
+
+// Extract payload type for any event
 export type TrackableEventMap = {
     [T in TrackableEvent as T['event']]: T extends { payload: infer P } ? P : undefined;
 };
@@ -71,16 +117,51 @@ export type EventMapping = {
 };
 
 export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
-    'Booking Flow Started':       { ga4: 'begin_checkout',       fb: 'InitiateCheckout',         fbCustom: false },
-    'Service Category Selected':  { ga4: 'view_item_list',       fb: 'ViewContent',              fbCustom: false },
-    'Service Selected':           { ga4: 'add_to_cart',          fb: 'AddToCart',                fbCustom: false },
-    'Service Variation Selected': { ga4: 'service_variation',    fb: 'ServiceVariationSelected', fbCustom: true },
-    'Employee Selected':          { ga4: 'employee_selected',    fb: 'EmployeeSelected',         fbCustom: true },
-    'Time Slot Selected':         { ga4: 'time_slot_selected',   fb: 'TimeSlotSelected',         fbCustom: true },
-    'Customer Info Submitted':    { ga4: 'add_shipping_info',    fb: 'CustomerInfoSubmitted',    fbCustom: true },
-    'Payment Started':            { ga4: 'add_payment_info',     fb: 'AddPaymentInfo',           fbCustom: false },
-    'Booking Completed':          { ga4: 'purchase',             fb: 'Purchase',                 fbCustom: false },
-    'Custom':                     { ga4: 'custom_event',         fb: 'Custom',                   fbCustom: true },
+    // -------------------------------------------------------------------------
+    // Sinna Service Booking Flow
+    // -------------------------------------------------------------------------
+    'Booking Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Service Category Selected': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
+    'Service Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Service Variation Selected': { ga4: 'service_variation', fb: 'ServiceVariationSelected', fbCustom: true },
+    'Employee Selected': { ga4: 'employee_selected', fb: 'EmployeeSelected', fbCustom: true },
+    'Time Slot Selected': { ga4: 'time_slot_selected', fb: 'TimeSlotSelected', fbCustom: true },
+    'Customer Info Submitted': { ga4: 'add_shipping_info', fb: 'CustomerInfoSubmitted', fbCustom: true },
+    'Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Booking Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    "Booking Failed": {
+        ga4: "booking_failed",
+        fb: "BookingFailed",
+        fbCustom: true
+    },
+    // -------------------------------------------------------------------------
+    // Dineout Reservation Flow
+    // -------------------------------------------------------------------------
+    // Phase 1: Reservation selection (dineout.is)
+    'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
+    'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
+    'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Reservation Redirected To Checkout': { ga4: 'reservation_redirected', fb: 'ReservationRedirected', fbCustom: true },
+    // Phase 2: Checkout (booking.dineout.is)
+    'Reservation Checkout Loaded': { ga4: 'view_cart', fb: 'ViewContent', fbCustom: false },
+    'Reservation Hold Started': { ga4: 'reservation_hold_started', fb: 'ReservationHoldStarted', fbCustom: true },
+    'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
+    'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
+    'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
+    'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
+    "Reservation Failed": {
+        ga4: "reservation_failed",
+        fb: 'ReservationFailed', 
+        fbCustom: true,
+    },
+    // -------------------------------------------------------------------------
+    // Generic
+    // -------------------------------------------------------------------------
+    'Custom': { ga4: 'custom_event', fb: 'Custom', fbCustom: true },
+  
 };
 
 export function mapEventName(event: TrackableEvent['event']): EventMapping {

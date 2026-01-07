@@ -10,7 +10,11 @@ export type TrackingConfig = {
     mixpanelToken?: string | null;
     companyId?: string | null;
 };
-export type TrackableEvent = {
+export type BaseTrackEvent = {
+    event: 'Custom';
+    payload: Record<string, any>;
+};
+export type SinnaBookingEvent = {
     event: 'Booking Flow Started';
 } | {
     event: 'Service Category Selected';
@@ -46,14 +50,21 @@ export type TrackableEvent = {
 } | {
     event: 'Customer Info Submitted';
     payload: {
-        email?: string;
-        phone?: string;
+        hasEmail?: boolean;
+        hasPhone?: boolean;
     };
 } | {
     event: 'Payment Started';
     payload: {
         amount?: number;
         currency?: string;
+    };
+} | {
+    event: 'Payment Failed';
+    payload: {
+        provider?: string;
+        error_code?: string;
+        card_provider?: string;
     };
 } | {
     event: 'Booking Completed';
@@ -63,9 +74,131 @@ export type TrackableEvent = {
         currency?: string;
     };
 } | {
-    event: 'Custom';
-    payload: Record<string, any>;
+    event: 'Booking Failed';
+    payload: {
+        bookingId?: string;
+        totalAmount?: number;
+        currency?: string;
+        type?: string;
+        reason?: string;
+    };
 };
+export type SinnaBookingEventMap = {
+    [T in SinnaBookingEvent as T['event']]: T extends {
+        payload: infer P;
+    } ? P : undefined;
+};
+export type DineoutReservationEvent = {
+    event: 'Reservation Flow Started';
+    payload: {
+        flow_id: string;
+        company_id: string;
+        restaurant_id?: string;
+        lng?: string;
+        source?: string;
+    };
+} | {
+    event: 'Reservation Date Selected';
+    payload: {
+        flow_id: string;
+        date: string;
+    };
+} | {
+    event: 'Reservation Guests Selected';
+    payload: {
+        flow_id: string;
+        guests: number;
+    };
+} | {
+    event: 'Reservation Time Selected';
+    payload: {
+        flow_id: string;
+        dateTime: string;
+        guests: number;
+    };
+} | {
+    event: 'Reservation Redirected To Checkout';
+    payload: {
+        flow_id: string;
+        target: string;
+    };
+} | {
+    event: 'Reservation Checkout Loaded';
+    payload: {
+        flow_id: string;
+        restaurant_id: string;
+        dateTime: string;
+        guests: number;
+        lng?: string;
+    };
+} | {
+    event: 'Reservation Hold Started';
+    payload: {
+        flow_id: string;
+        hold_seconds?: number;
+    };
+} | {
+    event: 'Customer Details Submitted';
+    payload: {
+        flow_id: string;
+        has_email: boolean;
+        has_phone: boolean;
+        has_special_request: boolean;
+    };
+} | {
+    event: 'Payment Required Shown';
+    payload: {
+        flow_id: string;
+        required: boolean;
+        amount?: number;
+        currency?: string;
+        reason?: string;
+    };
+} | {
+    event: 'Reservation Payment Started';
+    payload: {
+        flow_id: string;
+        amount: number;
+        currency: string;
+        provider?: string;
+    };
+} | {
+    event: 'Payment Failed';
+    payload: {
+        flow_id: string;
+        provider?: string;
+        error_code?: string;
+        card_provider?: string;
+    };
+} | {
+    event: 'Reservation Completed';
+    payload: {
+        flow_id: string;
+        reservation_id: string;
+        amount_paid?: number;
+        currency?: string;
+        payment_required: boolean;
+    };
+} | {
+    event: 'Reservation Failed';
+    payload: {
+        flow_id: string;
+        reservation_id: string;
+        type?: string;
+        reason?: string;
+    };
+} | {
+    event: 'Reservation Hold Expired';
+    payload: {
+        flow_id: string;
+    };
+};
+export type DineoutReservationEventMap = {
+    [T in DineoutReservationEvent as T['event']]: T extends {
+        payload: infer P;
+    } ? P : undefined;
+};
+export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | BaseTrackEvent;
 export type TrackableEventMap = {
     [T in TrackableEvent as T['event']]: T extends {
         payload: infer P;

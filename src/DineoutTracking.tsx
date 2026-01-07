@@ -7,6 +7,10 @@ import {
     TrackingEventFunction,
     TrackableEvent,
     TrackableEventMap,
+    SinnaBookingEvent,
+    SinnaBookingEventMap,
+    DineoutReservationEvent,
+    DineoutReservationEventMap,
     trackLog,
     detectPlatform,
     clearIntegrations,
@@ -28,7 +32,12 @@ import {
 // EXPORTED TYPES
 // ============================================================================
 
-export type { Platform, TrackableEvent } from './integrations';
+export type {
+    Platform,
+    TrackableEvent,
+    SinnaBookingEvent,
+    DineoutReservationEvent,
+} from './integrations';
 
 export type DineoutTrackingProps = {
     companyIdentifier: string;
@@ -40,45 +49,27 @@ export type DineoutTrackingProps = {
 // GLOBAL WINDOW AUGMENTATION
 // ============================================================================
 
-type DineoutTrackFunction = <T extends TrackableEvent['event']>(
-    event: T,
-    ...args: TrackableEventMap[T] extends undefined ? [] : [properties: TrackableEventMap[T]]
-) => void;
-
 declare global {
     interface Window {
-        dineoutTrack?: DineoutTrackFunction;
-        /** @deprecated Use dineoutTrack instead */
+        trackSinna?: typeof trackSinna;
+        trackDineout?: typeof trackDineout;
+        /** @deprecated Use trackSinna or trackDineout instead */
         sendDineoutEvent?: TrackingEventFunction;
     }
 }
 
 // ============================================================================
-// UNIFIED TRACKING FUNCTION
+// INTERNAL TRACKING FUNCTIONS
 // ============================================================================
 
 /**
- * Track an event across all platforms (Mixpanel, GA4, GTM, FB Pixel).
- * 
- * - Mixpanel receives the descriptive event name (e.g., "Service Selected")
- * - GA4/GTM receive the mapped event name (e.g., "add_to_cart")
- * - FB Pixel receives the mapped event name with standard/custom handling
- * 
- * @example
- * dineoutTrack('Booking Flow Started');
- * dineoutTrack('Service Selected', { serviceId: 'svc-1', serviceName: 'Haircut', price: 4500 });
- * dineoutTrack('Booking Completed', { bookingId: 'b-123', totalAmount: 4500, currency: 'ISK' });
+ * Internal function to send event to all platforms
  */
-export function dineoutTrack<T extends TrackableEvent['event']>(
-    event: T,
-    ...args: TrackableEventMap[T] extends undefined ? [] : [properties: TrackableEventMap[T]]
-): void {
-    const properties = args[0] as Record<string, any> | undefined;
-    
-    trackLog(`dineoutTrack: ${event}`);
+function internalTrack(event: string, properties?: Record<string, any>): void {
+    trackLog(`track: ${event}`);
     
     // Get mapped event names for GA4/FB
-    const mapped = mapEventName(event);
+    const mapped = mapEventName(event as TrackableEvent['event']);
     
     // Send descriptive name to Mixpanel
     trackToMixpanel(event, properties);
@@ -91,6 +82,47 @@ export function dineoutTrack<T extends TrackableEvent['event']>(
     
     // Send mapped name to FB Pixel (standard or custom)
     trackToFBPixel(mapped.fb, mapped.fbCustom, properties);
+}
+
+// ============================================================================
+// SINNA SERVICE BOOKING TRACKING (book.sinna.is)
+// ============================================================================
+
+/**
+ * Track a Sinna service booking event across all platforms.
+ * 
+ * @example
+ * trackSinna('Booking Flow Started');
+ * trackSinna('Service Selected', { serviceId: 'svc-1', serviceName: 'Haircut', price: 4500 });
+ * trackSinna('Booking Completed', { bookingId: 'b-123', totalAmount: 4500, currency: 'ISK' });
+ */
+export function trackSinna<T extends SinnaBookingEvent['event']>(
+    event: T,
+    ...args: SinnaBookingEventMap[T] extends undefined ? [] : [properties: SinnaBookingEventMap[T]]
+): void {
+    const properties = args[0] as Record<string, any> | undefined;
+    internalTrack(event, properties);
+}
+
+// ============================================================================
+// DINEOUT RESERVATION TRACKING (dineout.is -> booking.dineout.is)
+// ============================================================================
+
+/**
+ * Track a Dineout restaurant reservation event across all platforms.
+ * All events require a flow_id to connect events across domains.
+ * 
+ * @example
+ * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
+ * trackDineout('Reservation Time Selected', { flow_id: 'abc123', dateTime: '2026-01-15T19:00', guests: 4 });
+ * trackDineout('Reservation Completed', { flow_id: 'abc123', reservation_id: 'res-456', payment_required: false });
+ */
+export function trackDineout<T extends DineoutReservationEvent['event']>(
+    event: T,
+    ...args: DineoutReservationEventMap[T] extends undefined ? [] : [properties: DineoutReservationEventMap[T]]
+): void {
+    const properties = args[0] as Record<string, any> | undefined;
+    internalTrack(event, properties);
 }
 
 // ============================================================================
@@ -117,11 +149,23 @@ export function reset(): void {
 }
 
 // ============================================================================
-// LEGACY SEND EVENT FUNCTION
+// LEGACY FUNCTIONS (deprecated)
 // ============================================================================
 
 /**
- * @deprecated Use dineoutTrack instead
+ * @deprecated Use trackSinna or trackDineout instead
+ * Generic tracking function that accepts any event type.
+ */
+export function dineoutTrack<T extends TrackableEvent['event']>(
+    event: T,
+    ...args: TrackableEventMap[T] extends undefined ? [] : [properties: TrackableEventMap[T]]
+): void {
+    const properties = args[0] as Record<string, any> | undefined;
+    internalTrack(event, properties);
+}
+
+/**
+ * @deprecated Use trackSinna or trackDineout instead
  * Sends an event to all the added integrations via this package.
  */
 export const sendDineoutEvent: TrackingEventFunction = (event, data) => {
@@ -194,7 +238,8 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
         }
         
         // Expose functions globally
-        window.dineoutTrack = dineoutTrack;
+        window.trackSinna = trackSinna;
+        window.trackDineout = trackDineout;
         window.sendDineoutEvent = sendDineoutEvent;
     }, [init, companyIdentifier, platform, userId]);
 

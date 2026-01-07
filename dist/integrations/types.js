@@ -17,6 +17,9 @@ export function detectPlatform() {
     return 'dineout';
 }
 export const EVENT_MAP = {
+    // -------------------------------------------------------------------------
+    // Sinna Service Booking Flow
+    // -------------------------------------------------------------------------
     'Booking Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
     'Service Category Selected': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
     'Service Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
@@ -26,6 +29,37 @@ export const EVENT_MAP = {
     'Customer Info Submitted': { ga4: 'add_shipping_info', fb: 'CustomerInfoSubmitted', fbCustom: true },
     'Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
     'Booking Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    "Booking Failed": {
+        ga4: "booking_failed",
+        fb: "BookingFailed",
+        fbCustom: true
+    },
+    // -------------------------------------------------------------------------
+    // Dineout Reservation Flow
+    // -------------------------------------------------------------------------
+    // Phase 1: Reservation selection (dineout.is)
+    'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
+    'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
+    'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Reservation Redirected To Checkout': { ga4: 'reservation_redirected', fb: 'ReservationRedirected', fbCustom: true },
+    // Phase 2: Checkout (booking.dineout.is)
+    'Reservation Checkout Loaded': { ga4: 'view_cart', fb: 'ViewContent', fbCustom: false },
+    'Reservation Hold Started': { ga4: 'reservation_hold_started', fb: 'ReservationHoldStarted', fbCustom: true },
+    'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
+    'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
+    'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
+    'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
+    "Reservation Failed": {
+        ga4: "reservation_failed",
+        fb: 'ReservationFailed',
+        fbCustom: true,
+    },
+    // -------------------------------------------------------------------------
+    // Generic
+    // -------------------------------------------------------------------------
     'Custom': { ga4: 'custom_event', fb: 'Custom', fbCustom: true },
 };
 export function mapEventName(event) {
