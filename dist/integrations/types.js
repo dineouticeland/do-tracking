@@ -2,7 +2,7 @@
 // SHARED TYPES AND UTILITIES
 // ============================================================================
 export const verbose = true;
-export const currentVersion = '1.3.0';
+export const currentVersion = '1.3.3';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
@@ -21,6 +21,7 @@ export const EVENT_MAP = {
     // Sinna Service Booking Flow
     // -------------------------------------------------------------------------
     'Booking Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Booking Step Viewed': { ga4: 'booking_step_viewed', fb: 'BookingStepViewed', fbCustom: true },
     'Service Category Selected': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
     'Service Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
     'Service Variation Selected': { ga4: 'service_variation', fb: 'ServiceVariationSelected', fbCustom: true },
@@ -39,6 +40,7 @@ export const EVENT_MAP = {
     // -------------------------------------------------------------------------
     // Phase 1: Reservation selection (dineout.is)
     'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Step Viewed': { ga4: 'reservation_step_viewed', fb: 'ReservationStepViewed', fbCustom: true },
     'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
     'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
     'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
