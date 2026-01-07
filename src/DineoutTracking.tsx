@@ -46,28 +46,52 @@ export type DineoutTrackingProps = {
 };
 
 // ============================================================================
-// GLOBAL WINDOW AUGMENTATION
+// EVENT QUEUE (for events fired before initialization)
 // ============================================================================
 
-declare global {
-    interface Window {
-        trackSinna?: typeof trackSinna;
-        trackDineout?: typeof trackDineout;
-        /** @deprecated Use trackSinna or trackDineout instead */
-        sendDineoutEvent?: TrackingEventFunction;
-    }
-}
+type QueuedEvent = {
+    event: string;
+    properties?: Record<string, any>;
+    timestamp: number;
+};
 
-// ============================================================================
-// INTERNAL TRACKING FUNCTIONS
-// ============================================================================
+let eventQueue: QueuedEvent[] = [];
+let isTrackingInitialized = false;
 
 /**
- * Internal function to send event to all platforms
+ * Check if tracking has been initialized
  */
-function internalTrack(event: string, properties?: Record<string, any>): void {
-    trackLog(`track: ${event}`);
+export function isInitialized(): boolean {
+    return isTrackingInitialized;
+}
+
+/**
+ * Get the current event queue (for debugging)
+ */
+export function getEventQueue(): QueuedEvent[] {
+    return [...eventQueue];
+}
+
+/**
+ * Flush all queued events (called after initialization)
+ */
+function flushEventQueue(): void {
+    if (eventQueue.length === 0) return;
     
+    trackLog(`Flushing ${eventQueue.length} queued events`);
+    
+    const eventsToFlush = [...eventQueue];
+    eventQueue = [];
+    
+    eventsToFlush.forEach(({ event, properties }) => {
+        sendEventToAllPlatforms(event, properties);
+    });
+}
+
+/**
+ * Send event to all platforms (internal, no queueing)
+ */
+function sendEventToAllPlatforms(event: string, properties?: Record<string, any>): void {
     // Get mapped event names for GA4/FB
     const mapped = mapEventName(event as TrackableEvent['event']);
     
@@ -85,11 +109,49 @@ function internalTrack(event: string, properties?: Record<string, any>): void {
 }
 
 // ============================================================================
+// GLOBAL WINDOW AUGMENTATION
+// ============================================================================
+
+declare global {
+    interface Window {
+        trackSinna?: typeof trackSinna;
+        trackDineout?: typeof trackDineout;
+        /** @deprecated Use trackSinna or trackDineout instead */
+        sendDineoutEvent?: TrackingEventFunction;
+    }
+}
+
+// ============================================================================
+// INTERNAL TRACKING FUNCTIONS
+// ============================================================================
+
+/**
+ * Internal function to send event to all platforms (or queue if not initialized)
+ */
+function internalTrack(event: string, properties?: Record<string, any>): void {
+    trackLog(`track: ${event}`);
+    
+    if (!isTrackingInitialized) {
+        // Queue the event for later
+        trackLog(`Queueing event (tracking not initialized): ${event}`);
+        eventQueue.push({
+            event,
+            properties,
+            timestamp: Date.now(),
+        });
+        return;
+    }
+    
+    sendEventToAllPlatforms(event, properties);
+}
+
+// ============================================================================
 // SINNA SERVICE BOOKING TRACKING (book.sinna.is)
 // ============================================================================
 
 /**
  * Track a Sinna service booking event across all platforms.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  * 
  * @example
  * trackSinna('Booking Flow Started');
@@ -111,6 +173,7 @@ export function trackSinna<T extends SinnaBookingEvent['event']>(
 /**
  * Track a Dineout restaurant reservation event across all platforms.
  * All events require a flow_id to connect events across domains.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  * 
  * @example
  * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
@@ -234,6 +297,11 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
                         userId,
                     });
                 }
+
+                // Mark as initialized and flush queued events
+                isTrackingInitialized = true;
+                trackLog('Tracking initialized');
+                flushEventQueue();
             });
         }
         

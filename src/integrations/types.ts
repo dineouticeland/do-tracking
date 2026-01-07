@@ -3,7 +3,7 @@
 // ============================================================================
 
 export const verbose = true;
-export const currentVersion = '1.3.0';
+export const currentVersion = '1.3.2';
 
 export const trackLog = (info: string) => {
     if (verbose) {

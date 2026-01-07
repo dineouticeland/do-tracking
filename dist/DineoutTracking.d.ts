@@ -5,6 +5,19 @@ export type DineoutTrackingProps = {
     platform?: Platform;
     userId?: string;
 };
+type QueuedEvent = {
+    event: string;
+    properties?: Record<string, any>;
+    timestamp: number;
+};
+/**
+ * Check if tracking has been initialized
+ */
+export declare function isInitialized(): boolean;
+/**
+ * Get the current event queue (for debugging)
+ */
+export declare function getEventQueue(): QueuedEvent[];
 declare global {
     interface Window {
         trackSinna?: typeof trackSinna;
@@ -15,6 +28,7 @@ declare global {
 }
 /**
  * Track a Sinna service booking event across all platforms.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  *
  * @example
  * trackSinna('Booking Flow Started');
@@ -25,6 +39,7 @@ export declare function trackSinna<T extends SinnaBookingEvent['event']>(event: 
 /**
  * Track a Dineout restaurant reservation event across all platforms.
  * All events require a flow_id to connect events across domains.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  *
  * @example
  * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
