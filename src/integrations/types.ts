@@ -63,8 +63,8 @@ export type SinnaBookingEvent =
     | { event: 'Waiting List Completed'; payload: { } }
     | { event: 'Waiting List Failed'; payload: { reason?:string } }
 
-    | { event: 'Payment Started'; payload: { amount?: number; currency?: string } }
-    | { event: 'Payment Failed'; payload: { provider?: string; error_code?: string, card_provider?: string } }
+    | { event: 'Payment Started'; payload: { amount?: number; currency?: string, card_provider?: string, card_type?: string } }
+    | { event: 'Payment Failed'; payload: { provider?: string; reason?: string, card_provider?: string, card_type?: string } }
     | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string } }
     | { event: 'Booking Failed'; payload: { bookingId?: string; totalAmount?: number; currency?: string; type?:string, reason?:string } }
     ;

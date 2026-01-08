@@ -72,13 +72,16 @@ export type SinnaBookingEvent = {
     payload: {
         amount?: number;
         currency?: string;
+        card_provider?: string;
+        card_type?: string;
     };
 } | {
     event: 'Payment Failed';
     payload: {
         provider?: string;
-        error_code?: string;
+        reason?: string;
         card_provider?: string;
+        card_type?: string;
     };
 } | {
     event: 'Booking Completed';

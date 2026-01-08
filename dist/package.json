@@ -10,7 +10,8 @@
     "scripts": {
         "build": "tsc",
         "dev": "vite serve src/example",
-        "prepare": "npm run build"
+        "prepare": "npm run build",
+        "release": "./release.sh"
     },
     "peerDependencies": {
         "react": "^17 || ^18 || ^19"
