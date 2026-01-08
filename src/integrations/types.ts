@@ -3,7 +3,9 @@
 // ============================================================================
 
 export const verbose = true;
-export const currentVersion = '1.3.4';
+import pkg from '../../package.json';
+
+export const currentVersion = pkg.version;
 
 export const trackLog = (info: string) => {
     if (verbose) {

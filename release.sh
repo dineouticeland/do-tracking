@@ -1,36 +1,37 @@
 #!/usr/bin/env bash
-echo "🚀 Releasing $VERSION"
+
 set -euo pipefail
 
-# -------- CONFIG --------
-VERSION="${1:-}"
-TITLE="${2:-}"
-NOTES="${3:-}"
-
-# -------- VALIDATION --------
-if [[ -z "$VERSION" ]]; then
-  echo "❌ Usage: ./release.sh <version> [title] [notes]"
-  echo "Example: ./release.sh v1.0.0 \"Version 1.0.0\" \"Summary of changes\""
-  exit 1
-fi
-
+# -------- DEPENDENCIES --------
 if ! command -v gh >/dev/null 2>&1; then
-  echo "❌ GitHub CLI (gh) is not installed"
+  echo "❌ GitHub CLI (gh) not installed"
   exit 1
 fi
 
 if ! gh auth status >/dev/null 2>&1; then
-  echo "❌ GitHub CLI is not authenticated"
+  echo "❌ GitHub CLI not authenticated"
   exit 1
 fi
 
-# -------- DEFAULTS --------
-TITLE="${TITLE:-Version ${VERSION}}"
-NOTES="${NOTES:-Release ${VERSION}}"
+# -------- VERSION EXTRACTION --------
+if command -v jq >/dev/null 2>&1; then
+  VERSION=$(jq -r '.version' package.json)
+else    
+  VERSION=$(node -p "require('./package.json').version")
+fi
+
+if [[ -z "$VERSION" || "$VERSION" == "null" ]]; then
+  echo "❌ Could not read version from package.json"
+  exit 1
+fi
+
+TAG="v$VERSION"
+TITLE="Version $TAG"
+NOTES="Release $TAG"
 
 # -------- SAFETY CHECKS --------
-if git rev-parse "$VERSION" >/dev/null 2>&1; then
-  echo "❌ Tag '$VERSION' already exists"
+if [[ ! -f package.json ]]; then
+  echo "❌ package.json not found"
   exit 1
 fi
 
@@ -39,16 +40,21 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+  echo "❌ Tag '$TAG' already exists"
+  exit 1
+fi
+
 # -------- RELEASE FLOW --------
-echo "🏷️  Creating tag $VERSION"
-git tag -a "$VERSION" -m "$TITLE"
+echo "🏷️  Creating tag $TAG"
+git tag -a "$TAG" -m "$TITLE"
 
-echo "🚀 Pushing tag"
-git push origin "$VERSION"
+echo "🚀 Pushing tag $TAG"
+git push origin "$TAG"
 
-echo "📦 Creating GitHub release"
-gh release create "$VERSION" \
+echo "📦 Creating GitHub release $TAG"
+gh release create "$TAG" \
   --title "$TITLE" \
   --notes "$NOTES"
 
-echo "✅ Release $VERSION created successfully"
+echo "✅ Release $TAG created successfully"
