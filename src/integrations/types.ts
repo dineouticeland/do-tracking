@@ -52,7 +52,7 @@ export type BaseTrackEvent =
 
 export type SinnaBookingEvent =
     | { event: 'Booking Flow Started' }
-    | { event: 'Booking Step Viewed'; payload: { type:'scheduled' | 'service', step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept'| 'waiting_list' } }
+    | { event: 'Booking Step Viewed'; payload: { type:'scheduled' | 'service', step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept'| 'waiting_list', subType?: string } }
     | { event: 'Service Category Selected'; payload: { categoryId?: string; categoryName?: string } }
     | { event: 'Service Selected'; payload: { serviceId?: string; serviceName?: string; price?: number } }
     | { event: 'Service Variation Selected'; payload: { variationId?: string; variationName?: string } }
@@ -65,7 +65,7 @@ export type SinnaBookingEvent =
 
     | { event: 'Booking Payment Started'; payload: { amount?: number; currency?: string, card_provider?: string, card_type?: string } }
     | { event: 'Booking Payment Failed'; payload: { provider?: string; reason?: string, card_provider?: string, card_type?: string } }
-    | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string } }
+    | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string, type?: 'redirect' | 'normal' | 'waiting_list' } }
     | { event: 'Booking Failed'; payload: { bookingId?: string; totalAmount?: number; currency?: string; type?:string, reason?:string } }
     ;
 

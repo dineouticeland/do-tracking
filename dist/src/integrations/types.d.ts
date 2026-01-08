@@ -21,6 +21,7 @@ export type SinnaBookingEvent = {
     payload: {
         type: 'scheduled' | 'service';
         step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept' | 'waiting_list';
+        subType?: string;
     };
 } | {
     event: 'Service Category Selected';
@@ -89,6 +90,7 @@ export type SinnaBookingEvent = {
         bookingId?: string;
         totalAmount?: number;
         currency?: string;
+        type?: 'redirect' | 'normal' | 'waiting_list';
     };
 } | {
     event: 'Booking Failed';
