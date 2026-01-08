@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.3.3";
+export declare const currentVersion = "1.3.4";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -20,7 +20,7 @@ export type SinnaBookingEvent = {
     event: 'Booking Step Viewed';
     payload: {
         type: 'scheduled' | 'service';
-        step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept';
+        step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept' | 'waiting_list';
     };
 } | {
     event: 'Service Category Selected';
@@ -58,6 +58,14 @@ export type SinnaBookingEvent = {
     payload: {
         hasEmail?: boolean;
         hasPhone?: boolean;
+    };
+} | {
+    event: 'Waiting List Completed';
+    payload: {};
+} | {
+    event: 'Waiting List Failed';
+    payload: {
+        reason?: string;
     };
 } | {
     event: 'Payment Started';

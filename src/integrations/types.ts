@@ -3,7 +3,7 @@
 // ============================================================================
 
 export const verbose = true;
-export const currentVersion = '1.3.3';
+export const currentVersion = '1.3.4';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -50,13 +50,17 @@ export type BaseTrackEvent =
 
 export type SinnaBookingEvent =
     | { event: 'Booking Flow Started' }
-    | { event: 'Booking Step Viewed'; payload: { type:'scheduled' | 'service', step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept' } }
+    | { event: 'Booking Step Viewed'; payload: { type:'scheduled' | 'service', step: 'service_category' | 'service' | 'variation' | 'employee' | 'time_slot' | 'checkout' | 'reciept'| 'waiting_list' } }
     | { event: 'Service Category Selected'; payload: { categoryId?: string; categoryName?: string } }
     | { event: 'Service Selected'; payload: { serviceId?: string; serviceName?: string; price?: number } }
     | { event: 'Service Variation Selected'; payload: { variationId?: string; variationName?: string } }
     | { event: 'Employee Selected'; payload: { employeeId?: string; employeeName?: string } }
     | { event: 'Time Slot Selected'; payload: { date?: string; time?: string } }
     | { event: 'Customer Info Submitted'; payload: { hasEmail?: boolean; hasPhone?: boolean } }
+
+    | { event: 'Waiting List Completed'; payload: { } }
+    | { event: 'Waiting List Failed'; payload: { reason?:string } }
+
     | { event: 'Payment Started'; payload: { amount?: number; currency?: string } }
     | { event: 'Payment Failed'; payload: { provider?: string; error_code?: string, card_provider?: string } }
     | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string } }
@@ -137,6 +141,8 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
         fb: "BookingFailed",
         fbCustom: true
     },
+    'Waiting List Completed': { ga4: 'waiting_list_completed', fb: 'WaitingListCompleted', fbCustom: true },
+    'Waiting List Failed': { ga4: 'waiting_list_failed', fb: 'WaitingListFailed', fbCustom: true },
     // -------------------------------------------------------------------------
     // Dineout Reservation Flow
     // -------------------------------------------------------------------------

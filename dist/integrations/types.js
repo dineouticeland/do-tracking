@@ -2,7 +2,7 @@
 // SHARED TYPES AND UTILITIES
 // ============================================================================
 export const verbose = true;
-export const currentVersion = '1.3.3';
+export const currentVersion = '1.3.4';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
@@ -35,6 +35,8 @@ export const EVENT_MAP = {
         fb: "BookingFailed",
         fbCustom: true
     },
+    'Waiting List Completed': { ga4: 'waiting_list_completed', fb: 'WaitingListCompleted', fbCustom: true },
+    'Waiting List Failed': { ga4: 'waiting_list_failed', fb: 'WaitingListFailed', fbCustom: true },
     // -------------------------------------------------------------------------
     // Dineout Reservation Flow
     // -------------------------------------------------------------------------
