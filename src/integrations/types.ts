@@ -63,8 +63,8 @@ export type SinnaBookingEvent =
     | { event: 'Waiting List Completed'; payload: { } }
     | { event: 'Waiting List Failed'; payload: { reason?:string } }
 
-    | { event: 'Payment Started'; payload: { amount?: number; currency?: string, card_provider?: string, card_type?: string } }
-    | { event: 'Payment Failed'; payload: { provider?: string; reason?: string, card_provider?: string, card_type?: string } }
+    | { event: 'Booking Payment Started'; payload: { amount?: number; currency?: string, card_provider?: string, card_type?: string } }
+    | { event: 'Booking Payment Failed'; payload: { provider?: string; reason?: string, card_provider?: string, card_type?: string } }
     | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string } }
     | { event: 'Booking Failed'; payload: { bookingId?: string; totalAmount?: number; currency?: string; type?:string, reason?:string } }
     ;
@@ -92,7 +92,7 @@ export type DineoutReservationEvent =
     | { event: 'Customer Details Submitted'; payload: { flow_id: string; has_email: boolean; has_phone: boolean; has_special_request: boolean } }
     | { event: 'Payment Required Shown'; payload: { flow_id: string; required: boolean; amount?: number; currency?: string; reason?: string } }
     | { event: 'Reservation Payment Started'; payload: { flow_id: string; amount: number; currency: string; provider?: string } }
-    | { event: 'Payment Failed'; payload: { flow_id: string; provider?: string; error_code?: string, card_provider?: string } }
+    | { event: 'Reservation Payment Failed'; payload: { flow_id: string; provider?: string; error_code?: string, card_provider?: string } }
     | { event: 'Reservation Completed'; payload: { flow_id: string; reservation_id: string; amount_paid?: number; currency?: string; payment_required: boolean } }
     | { event: 'Reservation Failed'; payload: { flow_id: string; reservation_id: string; type?:string, reason?:string } }
     | { event: 'Reservation Hold Expired'; payload: { flow_id: string } }
@@ -136,7 +136,8 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     'Employee Selected': { ga4: 'employee_selected', fb: 'EmployeeSelected', fbCustom: true },
     'Time Slot Selected': { ga4: 'time_slot_selected', fb: 'TimeSlotSelected', fbCustom: true },
     'Customer Info Submitted': { ga4: 'add_shipping_info', fb: 'CustomerInfoSubmitted', fbCustom: true },
-    'Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Booking Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Booking Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Booking Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     "Booking Failed": {
         ga4: "booking_failed",
@@ -161,7 +162,7 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
     'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
     'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
-    'Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
+    'Reservation Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
     "Reservation Failed": {

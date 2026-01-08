@@ -68,7 +68,7 @@ export type SinnaBookingEvent = {
         reason?: string;
     };
 } | {
-    event: 'Payment Started';
+    event: 'Booking Payment Started';
     payload: {
         amount?: number;
         currency?: string;
@@ -76,7 +76,7 @@ export type SinnaBookingEvent = {
         card_type?: string;
     };
 } | {
-    event: 'Payment Failed';
+    event: 'Booking Payment Failed';
     payload: {
         provider?: string;
         reason?: string;
@@ -185,7 +185,7 @@ export type DineoutReservationEvent = {
         provider?: string;
     };
 } | {
-    event: 'Payment Failed';
+    event: 'Reservation Payment Failed';
     payload: {
         flow_id: string;
         provider?: string;

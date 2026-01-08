@@ -134,7 +134,7 @@ export default function TestApp() {
                             })}>
                                 7. Customer Info Submitted
                             </button>
-                            <button onClick={() => trackSinna('Payment Started', { 
+                            <button onClick={() => trackSinna('Booking Payment Started', { 
                                 amount: 4500, 
                                 currency: 'ISK' 
                             })}>
@@ -254,7 +254,7 @@ export default function TestApp() {
                                 10. Payment Started
                             </button>
                             <button 
-                                onClick={() => trackDineout('Payment Failed', { 
+                                onClick={() => trackDineout('Reservation Payment Failed', { 
                                     flow_id: flowId,
                                     provider: 'valitor',
                                     error_code: 'card_declined',

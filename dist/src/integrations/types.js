@@ -29,7 +29,8 @@ export const EVENT_MAP = {
     'Employee Selected': { ga4: 'employee_selected', fb: 'EmployeeSelected', fbCustom: true },
     'Time Slot Selected': { ga4: 'time_slot_selected', fb: 'TimeSlotSelected', fbCustom: true },
     'Customer Info Submitted': { ga4: 'add_shipping_info', fb: 'CustomerInfoSubmitted', fbCustom: true },
-    'Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Booking Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Booking Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Booking Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     "Booking Failed": {
         ga4: "booking_failed",
@@ -54,7 +55,7 @@ export const EVENT_MAP = {
     'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
     'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
     'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
-    'Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
+    'Reservation Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
     "Reservation Failed": {

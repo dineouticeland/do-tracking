@@ -59,7 +59,7 @@ export default function TestApp() {
                                         }), children: "6. Time Slot Selected" }), _jsx("button", { onClick: () => trackSinna('Customer Info Submitted', {
                                             hasEmail: true,
                                             hasPhone: true
-                                        }), children: "7. Customer Info Submitted" }), _jsx("button", { onClick: () => trackSinna('Payment Started', {
+                                        }), children: "7. Customer Info Submitted" }), _jsx("button", { onClick: () => trackSinna('Booking Payment Started', {
                                             amount: 4500,
                                             currency: 'ISK'
                                         }), children: "8. Payment Started" }), _jsx("button", { onClick: () => trackSinna('Booking Completed', {
@@ -110,7 +110,7 @@ export default function TestApp() {
                                             amount: 2000,
                                             currency: 'ISK',
                                             provider: 'valitor'
-                                        }), children: "10. Payment Started" }), _jsx("button", { onClick: () => trackDineout('Payment Failed', {
+                                        }), children: "10. Payment Started" }), _jsx("button", { onClick: () => trackDineout('Reservation Payment Failed', {
                                             flow_id: flowId,
                                             provider: 'valitor',
                                             error_code: 'card_declined',
