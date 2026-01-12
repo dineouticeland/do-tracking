@@ -1,7 +1,7 @@
 import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap, DineoutDiscoveryEvent, DineoutDiscoveryEventMap } from './integrations/index.js';
 export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, DineoutDiscoveryEvent, } from './integrations/index.js';
 export type DineoutTrackingProps = {
-    companyIdentifier: string;
+    companyIdentifier?: string;
     platform?: Platform;
     userId?: string;
 };
@@ -23,6 +23,7 @@ declare global {
         trackSinna?: typeof trackSinna;
         trackDineout?: typeof trackDineout;
         trackDineoutDiscovery?: typeof trackDineoutDiscovery;
+        trackPageView?: typeof trackPageView;
         /** @deprecated Use trackSinna or trackDineout instead */
         sendDineoutEvent?: TrackingEventFunction;
     }
@@ -68,6 +69,26 @@ export declare function identifyUser(userId: string): void;
  * Clears the current user identity and generates a new anonymous ID.
  */
 export declare function reset(): void;
+/**
+ * Track a pageview across all platforms.
+ * Call this on route changes in SPA applications (e.g., Next.js).
+ *
+ * @param url - The URL/path of the page (e.g., '/restaurants/pizza-place')
+ * @param title - Optional page title
+ *
+ * @example
+ * // In Next.js App Router
+ * useEffect(() => {
+ *   trackPageView(window.location.pathname);
+ * }, [pathname]);
+ *
+ * @example
+ * // In Next.js Pages Router
+ * router.events.on('routeChangeComplete', (url) => {
+ *   trackPageView(url);
+ * });
+ */
+export declare function trackPageView(url: string, title?: string): void;
 /**
  * @deprecated Use trackSinna or trackDineout instead
  * Generic tracking function that accepts any event type.

@@ -43,7 +43,7 @@ export type {
 } from './integrations/index.js';
 
 export type DineoutTrackingProps = {
-    companyIdentifier: string;
+    companyIdentifier?: string;  // Optional - if not provided, only Dineout tracking is initialized
     platform?: Platform;
     userId?: string;
 };
@@ -87,7 +87,12 @@ function flushEventQueue(): void {
     eventQueue = [];
     
     eventsToFlush.forEach(({ event, properties }) => {
-        sendEventToAllPlatforms(event, properties);
+        if (event === '__pageview__') {
+            // Handle queued pageview
+            trackPageView(properties?.url || '/', properties?.title);
+        } else {
+            sendEventToAllPlatforms(event, properties);
+        }
     });
 }
 
@@ -120,6 +125,7 @@ declare global {
         trackSinna?: typeof trackSinna;
         trackDineout?: typeof trackDineout;
         trackDineoutDiscovery?: typeof trackDineoutDiscovery;
+        trackPageView?: typeof trackPageView;
         /** @deprecated Use trackSinna or trackDineout instead */
         sendDineoutEvent?: TrackingEventFunction;
     }
@@ -236,6 +242,68 @@ export function reset(): void {
 }
 
 // ============================================================================
+// PAGEVIEW TRACKING
+// ============================================================================
+
+/**
+ * Track a pageview across all platforms.
+ * Call this on route changes in SPA applications (e.g., Next.js).
+ * 
+ * @param url - The URL/path of the page (e.g., '/restaurants/pizza-place')
+ * @param title - Optional page title
+ * 
+ * @example
+ * // In Next.js App Router
+ * useEffect(() => {
+ *   trackPageView(window.location.pathname);
+ * }, [pathname]);
+ * 
+ * @example
+ * // In Next.js Pages Router
+ * router.events.on('routeChangeComplete', (url) => {
+ *   trackPageView(url);
+ * });
+ */
+export function trackPageView(url: string, title?: string): void {
+    trackLog(`pageview: ${url}`);
+    
+    if (!isTrackingInitialized) {
+        trackLog('Queueing pageview (tracking not initialized)');
+        eventQueue.push({
+            event: '__pageview__',
+            properties: { url, title },
+            timestamp: Date.now(),
+        });
+        return;
+    }
+    
+    // GA4 - send page_view event
+    if (window.gtag) {
+        window.gtag('event', 'page_view', {
+            page_path: url,
+            page_title: title,
+        });
+    }
+    
+    // GTM - push to dataLayer
+    if (window.dataLayer) {
+        window.dataLayer.push({
+            event: 'page_view',
+            page_path: url,
+            page_title: title,
+        });
+    }
+    
+    // Facebook Pixel - track PageView
+    if (window.fbq) {
+        window.fbq('track', 'PageView');
+    }
+    
+    // Mixpanel - track page view (if not using auto track_pageview)
+    trackToMixpanel('Page Viewed', { url, title });
+}
+
+// ============================================================================
 // LEGACY FUNCTIONS (deprecated)
 // ============================================================================
 
@@ -283,8 +351,11 @@ const BASE_API_URL = () => {
     }
 };
 
-async function fetchTrackingConfig(companyIdentifier: string): Promise<TrackingConfig> {
-    const res = await fetch(`${BASE_API_URL()}/api/web/tracking?companyIdentifier=${companyIdentifier}`);
+async function fetchTrackingConfig(companyIdentifier?: string): Promise<TrackingConfig> {
+    const url = companyIdentifier 
+        ? `${BASE_API_URL()}/api/web/tracking?companyIdentifier=${companyIdentifier}`
+        : `${BASE_API_URL()}/api/web/tracking`;
+    const res = await fetch(url);
     if (!res.ok) return {};
     return res.json();
 }
@@ -293,49 +364,88 @@ async function fetchTrackingConfig(companyIdentifier: string): Promise<TrackingC
 // MAIN COMPONENT
 // ============================================================================
 
+// Track current company to detect changes
+let currentCompanyIdentifier: string | undefined = undefined;
+
 export function DineoutTracking({ companyIdentifier, platform, userId }: DineoutTrackingProps) {
-    const [init, setInit] = useState(false);
+    const [initKey, setInitKey] = useState<string | undefined>(undefined);
 
     useEffect(() => {
-        if (init) return;
+        // Skip if already initialized with the same companyIdentifier
+        if (initKey === (companyIdentifier ?? '__dineout_only__')) return;
         
-        if (companyIdentifier?.length > 0) {
-            setInit(true);
-            fetchTrackingConfig(companyIdentifier).then((config) => {
-                trackLog('Clearing integrations');
+        const newInitKey = companyIdentifier ?? '__dineout_only__';
+        setInitKey(newInitKey);
+        
+        fetchTrackingConfig(companyIdentifier).then((config) => {
+            // Only clear integrations if this is a NEW restaurant (not just re-init)
+            if (currentCompanyIdentifier !== companyIdentifier) {
+                trackLog(`Switching from ${currentCompanyIdentifier ?? 'none'} to ${companyIdentifier ?? 'dineout-only'}`);
                 clearIntegrations();
+                currentCompanyIdentifier = companyIdentifier;
+            }
 
-                // Initialize Google integrations
-                config.gaTrackingId?.split(',').map(id => id.trim()).forEach(initGA4);
-                config.gTagId?.split(',').map(id => id.trim()).forEach(initGTM);
-
-                // Initialize Facebook Pixel
-                config.fbPixelId?.split(',').map(id => id.trim()).forEach(initFacebookPixel);
-
-                // Initialize Mixpanel if token is present
-                if (config.mixpanelToken && config.companyId) {
-                    const resolvedPlatform = platform ?? detectPlatform();
-                    initMixpanel({
-                        token: config.mixpanelToken,
-                        companyId: config.companyId,
-                        platform: resolvedPlatform,
-                        userId,
-                    });
-                }
-
-                // Mark as initialized and flush queued events
-                isTrackingInitialized = true;
-                trackLog('Tracking initialized');
-                flushEventQueue();
+            // ---------------------------------------------------------------
+            // Dineout site-wide tracking (all events go to Dineout's accounts)
+            // ---------------------------------------------------------------
+            config.dineoutGaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+                trackLog(`Initializing Dineout GA4: ${id}`);
+                initGA4(id);
             });
-        }
+            config.dineoutGTagId?.split(',').map(id => id.trim()).forEach(id => {
+                trackLog(`Initializing Dineout GTM: ${id}`);
+                initGTM(id);
+            });
+            config.dineoutFbPixelId?.split(',').map(id => id.trim()).forEach(id => {
+                trackLog(`Initializing Dineout FB Pixel: ${id}`);
+                initFacebookPixel(id);
+            });
+
+            // ---------------------------------------------------------------
+            // Restaurant-specific tracking (events also go to restaurant's accounts)
+            // Only if companyIdentifier is provided
+            // ---------------------------------------------------------------
+            if (companyIdentifier) {
+                config.gaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Restaurant GA4: ${id}`);
+                    initGA4(id);
+                });
+                config.gTagId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Restaurant GTM: ${id}`);
+                    initGTM(id);
+                });
+                config.fbPixelId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Restaurant FB Pixel: ${id}`);
+                    initFacebookPixel(id);
+                });
+            }
+
+            // ---------------------------------------------------------------
+            // Mixpanel (Dineout funnel analytics)
+            // ---------------------------------------------------------------
+            if (config.mixpanelToken && config.companyId) {
+                const resolvedPlatform = platform ?? detectPlatform();
+                initMixpanel({
+                    token: config.mixpanelToken,
+                    companyId: config.companyId,
+                    platform: resolvedPlatform,
+                    userId,
+                });
+            }
+
+            // Mark as initialized and flush queued events
+            isTrackingInitialized = true;
+            trackLog(`Tracking initialized (company: ${companyIdentifier ?? 'dineout-only'})`);
+            flushEventQueue();
+        });
         
         // Expose functions globally
         window.trackSinna = trackSinna;
         window.trackDineout = trackDineout;
         window.trackDineoutDiscovery = trackDineoutDiscovery;
+        window.trackPageView = trackPageView;
         window.sendDineoutEvent = sendDineoutEvent;
-    }, [init, companyIdentifier, platform, userId]);
+    }, [companyIdentifier, platform, userId]);
 
     return null;
 }

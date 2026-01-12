@@ -23,7 +23,7 @@ export function initMixpanel({ token, companyId, platform, userId }) {
     }
     mixpanel.init(token, {
         debug: verbose,
-        track_pageview: true,
+        track_pageview: false,
         autocapture: false, //if we want to capture everything
         record_sessions_percent: 0, //100 for development, 0 for development
         persistence: 'localStorage',
