@@ -14,6 +14,9 @@ export type {
     // Dineout reservation events
     DineoutReservationEvent,
     DineoutReservationEventMap,
+    // Dineout discovery events
+    DineoutDiscoveryEvent,
+    DineoutDiscoveryEventMap,
     // Combined event type
     TrackableEvent,
     TrackableEventMap,

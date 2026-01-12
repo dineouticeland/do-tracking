@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.4.1";
+export declare const currentVersion = "1.4.4";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -108,48 +108,8 @@ export type SinnaBookingEventMap = {
     } ? P : undefined;
 };
 export type DineoutReservationEvent = {
-    event: 'Reservation Step Viewed';
-    payload: {
-        step: 'date' | 'guest' | 'time' | 'checkout' | 'reciept' | 'checkout' | 'reciept';
-    };
-} | {
-    event: 'Reservation Flow Started';
-    payload: {
-        flow_id: string;
-        company_id: string;
-        restaurant_id?: string;
-        lng?: string;
-        source?: string;
-    };
-} | {
-    event: 'Reservation Date Selected';
-    payload: {
-        flow_id: string;
-        date: string;
-    };
-} | {
-    event: 'Reservation Guests Selected';
-    payload: {
-        flow_id: string;
-        guests: number;
-    };
-} | {
-    event: 'Reservation Time Selected';
-    payload: {
-        flow_id: string;
-        dateTime: string;
-        guests: number;
-    };
-} | {
-    event: 'Reservation Redirected To Checkout';
-    payload: {
-        flow_id: string;
-        target: string;
-    };
-} | {
     event: 'Reservation Checkout Loaded';
     payload: {
-        flow_id: string;
         restaurant_id: string;
         dateTime: string;
         guests: number;
@@ -158,13 +118,11 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Hold Started';
     payload: {
-        flow_id: string;
         hold_seconds?: number;
     };
 } | {
     event: 'Customer Details Submitted';
     payload: {
-        flow_id: string;
         has_email: boolean;
         has_phone: boolean;
         has_special_request: boolean;
@@ -172,7 +130,6 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Payment Required Shown';
     payload: {
-        flow_id: string;
         required: boolean;
         amount?: number;
         currency?: string;
@@ -181,7 +138,6 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Payment Started';
     payload: {
-        flow_id: string;
         amount: number;
         currency: string;
         provider?: string;
@@ -189,7 +145,6 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Payment Failed';
     payload: {
-        flow_id: string;
         provider?: string;
         error_code?: string;
         card_provider?: string;
@@ -197,7 +152,6 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Completed';
     payload: {
-        flow_id: string;
         reservation_id: string;
         amount_paid?: number;
         currency?: string;
@@ -206,23 +160,119 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Failed';
     payload: {
-        flow_id: string;
-        reservation_id: string;
+        reservation_id?: string;
         type?: string;
         reason?: string;
     };
 } | {
     event: 'Reservation Hold Expired';
-    payload: {
-        flow_id: string;
-    };
 };
 export type DineoutReservationEventMap = {
     [T in DineoutReservationEvent as T['event']]: T extends {
         payload: infer P;
     } ? P : undefined;
 };
-export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | BaseTrackEvent;
+export type DineoutDiscoveryEvent = {
+    event: 'Restaurant Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+        source: 'frontpage' | 'search' | 'category' | 'book_table';
+    };
+} | {
+    event: 'CTA Button Clicked';
+    payload: {
+        cta_name: string;
+        cta_position?: string;
+        destination_url?: string;
+    };
+} | {
+    event: 'Event Clicked';
+    payload: {
+        event_id: string;
+        event_name?: string;
+    };
+} | {
+    event: 'Takeaway Category Clicked';
+    payload: {
+        category_id: string;
+        category_name?: string;
+    };
+} | {
+    event: 'Bottom Nav Clicked';
+    payload: {
+        nav_item: string;
+        destination_url?: string;
+        position?: number;
+    };
+} | {
+    event: 'Top Nav Clicked';
+    payload: {
+        nav_item: string;
+        destination_url?: string;
+    };
+} | {
+    event: 'Search Opened';
+} | {
+    event: 'Search Result Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+        search_query?: string;
+    };
+} | {
+    event: 'Table Restaurant Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+    };
+} | {
+    event: 'Quick Book Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+    };
+} | {
+    event: 'Reservation Step Viewed';
+    payload: {
+        step: 'date' | 'guest' | 'time' | 'checkout' | 'reciept';
+    };
+} | {
+    event: 'Reservation Flow Started';
+    payload: {
+        company_id: string;
+        restaurant_id?: string;
+        lng?: string;
+        source?: string;
+    };
+} | {
+    event: 'Reservation Date Selected';
+    payload: {
+        date: string;
+    };
+} | {
+    event: 'Reservation Guests Selected';
+    payload: {
+        guests: number;
+    };
+} | {
+    event: 'Reservation Time Selected';
+    payload: {
+        dateTime: string;
+        guests: number;
+    };
+} | {
+    event: 'Reservation Redirected To Checkout';
+    payload: {
+        target: string;
+    };
+};
+export type DineoutDiscoveryEventMap = {
+    [T in DineoutDiscoveryEvent as T['event']]: T extends {
+        payload: infer P;
+    } ? P : undefined;
+};
+export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | DineoutDiscoveryEvent | BaseTrackEvent;
 export type TrackableEventMap = {
     [T in TrackableEvent as T['event']]: T extends {
         payload: infer P;

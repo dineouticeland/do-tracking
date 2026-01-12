@@ -80,19 +80,34 @@ export function trackSinna(event, ...args) {
     internalTrack(event, properties);
 }
 // ============================================================================
-// DINEOUT RESERVATION TRACKING (dineout.is -> booking.dineout.is)
+// DINEOUT RESERVATION TRACKING (booking.dineout.is checkout)
 // ============================================================================
 /**
- * Track a Dineout restaurant reservation event across all platforms.
- * All events require a flow_id to connect events across domains.
+ * Track a Dineout restaurant reservation checkout event across all platforms.
  * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  *
  * @example
- * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
- * trackDineout('Reservation Time Selected', { flow_id: 'abc123', dateTime: '2026-01-15T19:00', guests: 4 });
- * trackDineout('Reservation Completed', { flow_id: 'abc123', reservation_id: 'res-456', payment_required: false });
+ * trackDineout('Reservation Checkout Loaded', { restaurant_id: 'rest-1', dateTime: '2026-01-15T19:00', guests: 4 });
+ * trackDineout('Reservation Completed', { reservation_id: 'res-456', payment_required: false });
  */
 export function trackDineout(event, ...args) {
+    const properties = args[0];
+    internalTrack(event, properties);
+}
+// ============================================================================
+// DINEOUT DISCOVERY TRACKING (dineout.is frontpage & book-a-table)
+// ============================================================================
+/**
+ * Track a Dineout discovery/navigation event across all platforms.
+ * Use this for frontpage interactions, search, book-a-table, and reservation selection events.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
+ *
+ * @example
+ * trackDineoutDiscovery('Restaurant Clicked', { restaurant_id: 'rest-1', source: 'frontpage' });
+ * trackDineoutDiscovery('Search Opened');
+ * trackDineoutDiscovery('Reservation Flow Started', { company_id: 'comp-1' });
+ */
+export function trackDineoutDiscovery(event, ...args) {
     const properties = args[0];
     internalTrack(event, properties);
 }
@@ -199,6 +214,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
         // Expose functions globally
         window.trackSinna = trackSinna;
         window.trackDineout = trackDineout;
+        window.trackDineoutDiscovery = trackDineoutDiscovery;
         window.sendDineoutEvent = sendDineoutEvent;
     }, [init, companyIdentifier, platform, userId]);
     return null;

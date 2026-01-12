@@ -28,6 +28,7 @@ export function initMixpanel({ token, companyId, platform, userId }) {
         record_sessions_percent: 0, //100 for development, 0 for development
         persistence: 'localStorage',
         api_host: 'https://api-eu.mixpanel.com',
+        cross_subdomain_cookie: true, // Share distinct_id across *.dineout.is subdomains
     });
     // Register super properties that will be sent with every event
     mixpanel.register({

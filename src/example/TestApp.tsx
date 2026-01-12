@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { DineoutTracking, trackSinna, trackDineout, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking.js";
+import { DineoutTracking, trackSinna, trackDineout, trackDineoutDiscovery, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking.js";
 
 const TEST_USERS = [
     { id: null, name: 'Anonymous (No User)' },
@@ -8,16 +8,10 @@ const TEST_USERS = [
     { id: 'testtester-002', name: 'testtester' },
 ];
 
-// Generate a unique flow ID for cross-domain tracking
-function generateFlowId(): string {
-    return `flow_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-}
-
 export default function TestApp() {
     const [companyIdentifier, setCompanyIdentifier] = useState('');
     const [initialised, setInitialised] = useState(false);
     const [currentUser, setCurrentUser] = useState<typeof TEST_USERS[0]>(TEST_USERS[0]);
-    const [flowId, setFlowId] = useState(generateFlowId());
 
     const handleUserSelect = (user: typeof TEST_USERS[0]) => {
         if (user.id) {
@@ -26,12 +20,6 @@ export default function TestApp() {
             reset();
         }
         setCurrentUser(user);
-    };
-
-    const newFlowId = () => {
-        const id = generateFlowId();
-        setFlowId(id);
-        return id;
     };
 
     return (
@@ -155,27 +143,17 @@ export default function TestApp() {
 
                     {/* Dineout Reservation Flow */}
                     <section style={{ marginBottom: 30, padding: 16, background: '#fff8e1', borderRadius: 8 }}>
-                        <h2 style={{ marginTop: 0 }}>🍽️ Dineout Reservation (trackDineout)</h2>
+                        <h2 style={{ marginTop: 0 }}>🍽️ Dineout Reservation</h2>
                         <p style={{ margin: '0 0 12px 0', color: '#666', fontSize: 14 }}>
                             <code>dineout.is</code> → <code>booking.dineout.is</code> - Restaurant reservation flow
+                            <br />
+                            <em>User identity tracked by Mixpanel's cross_subdomain_cookie</em>
                         </p>
-                        
-                        {/* Flow ID Display */}
-                        <div style={{ marginBottom: 16, padding: 12, background: '#fff', borderRadius: 4, border: '1px solid #ddd' }}>
-                            <strong>Flow ID:</strong> <code style={{ background: '#eee', padding: '2px 6px', borderRadius: 3 }}>{flowId}</code>
-                            <button 
-                                onClick={newFlowId} 
-                                style={{ marginLeft: 12, padding: '4px 8px', fontSize: 12 }}
-                            >
-                                Generate New Flow ID
-                            </button>
-                        </div>
 
                         {/* Phase 1: dineout.is */}
                         <h3 style={{ marginBottom: 8, color: '#666' }}>Phase 1: Reservation Selection (dineout.is)</h3>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-                            <button onClick={() => trackDineout('Reservation Flow Started', { 
-                                flow_id: flowId, 
+                            <button onClick={() => trackDineoutDiscovery('Reservation Flow Started', { 
                                 company_id: companyIdentifier,
                                 restaurant_id: 'rest-123',
                                 lng: 'is',
@@ -183,27 +161,23 @@ export default function TestApp() {
                             })}>
                                 1. Flow Started
                             </button>
-                            <button onClick={() => trackDineout('Reservation Date Selected', { 
-                                flow_id: flowId, 
+                            <button onClick={() => trackDineoutDiscovery('Reservation Date Selected', { 
                                 date: '2026-01-15' 
                             })}>
                                 2. Date Selected
                             </button>
-                            <button onClick={() => trackDineout('Reservation Guests Selected', { 
-                                flow_id: flowId, 
+                            <button onClick={() => trackDineoutDiscovery('Reservation Guests Selected', { 
                                 guests: 4 
                             })}>
                                 3. Guests Selected
                             </button>
-                            <button onClick={() => trackDineout('Reservation Time Selected', { 
-                                flow_id: flowId, 
+                            <button onClick={() => trackDineoutDiscovery('Reservation Time Selected', { 
                                 dateTime: '2026-01-15T19:00:00', 
                                 guests: 4 
                             })}>
                                 4. Time Selected
                             </button>
-                            <button onClick={() => trackDineout('Reservation Redirected To Checkout', { 
-                                flow_id: flowId, 
+                            <button onClick={() => trackDineoutDiscovery('Reservation Redirected To Checkout', { 
                                 target: 'booking.dineout.is' 
                             })}>
                                 5. Redirect to Checkout →
@@ -214,7 +188,6 @@ export default function TestApp() {
                         <h3 style={{ marginBottom: 8, color: '#666' }}>Phase 2: Checkout (booking.dineout.is)</h3>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                             <button onClick={() => trackDineout('Reservation Checkout Loaded', { 
-                                flow_id: flowId, 
                                 restaurant_id: 'rest-123',
                                 dateTime: '2026-01-15T19:00:00',
                                 guests: 4,
@@ -223,13 +196,11 @@ export default function TestApp() {
                                 6. Checkout Loaded
                             </button>
                             <button onClick={() => trackDineout('Reservation Hold Started', { 
-                                flow_id: flowId, 
                                 hold_seconds: 600 
                             })}>
                                 7. Hold Started (10min)
                             </button>
                             <button onClick={() => trackDineout('Customer Details Submitted', { 
-                                flow_id: flowId,
                                 has_email: true,
                                 has_phone: true,
                                 has_special_request: false
@@ -237,7 +208,6 @@ export default function TestApp() {
                                 8. Details Submitted
                             </button>
                             <button onClick={() => trackDineout('Payment Required Shown', { 
-                                flow_id: flowId,
                                 required: true,
                                 amount: 2000,
                                 currency: 'ISK',
@@ -246,7 +216,6 @@ export default function TestApp() {
                                 9. Payment Required
                             </button>
                             <button onClick={() => trackDineout('Reservation Payment Started', { 
-                                flow_id: flowId,
                                 amount: 2000,
                                 currency: 'ISK',
                                 provider: 'valitor'
@@ -255,7 +224,6 @@ export default function TestApp() {
                             </button>
                             <button 
                                 onClick={() => trackDineout('Reservation Payment Failed', { 
-                                    flow_id: flowId,
                                     provider: 'valitor',
                                     error_code: 'card_declined',
                                     card_provider: 'visa'
@@ -266,7 +234,6 @@ export default function TestApp() {
                             </button>
                             <button 
                                 onClick={() => trackDineout('Reservation Completed', { 
-                                    flow_id: flowId,
                                     reservation_id: 'res-456',
                                     amount_paid: 2000,
                                     currency: 'ISK',
@@ -277,9 +244,7 @@ export default function TestApp() {
                                 ✅ Reservation Completed
                             </button>
                             <button 
-                                onClick={() => trackDineout('Reservation Hold Expired', { 
-                                    flow_id: flowId 
-                                })}
+                                onClick={() => trackDineout('Reservation Hold Expired')}
                                 style={{ background: '#fff3e0', borderColor: '#ffa726' }}
                             >
                                 ⏰ Hold Expired

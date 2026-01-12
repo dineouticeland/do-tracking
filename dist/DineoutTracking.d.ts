@@ -1,5 +1,5 @@
-import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap } from './integrations/index.js';
-export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, } from './integrations/index.js';
+import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap, DineoutDiscoveryEvent, DineoutDiscoveryEventMap } from './integrations/index.js';
+export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, DineoutDiscoveryEvent, } from './integrations/index.js';
 export type DineoutTrackingProps = {
     companyIdentifier: string;
     platform?: Platform;
@@ -22,6 +22,7 @@ declare global {
     interface Window {
         trackSinna?: typeof trackSinna;
         trackDineout?: typeof trackDineout;
+        trackDineoutDiscovery?: typeof trackDineoutDiscovery;
         /** @deprecated Use trackSinna or trackDineout instead */
         sendDineoutEvent?: TrackingEventFunction;
     }
@@ -37,16 +38,25 @@ declare global {
  */
 export declare function trackSinna<T extends SinnaBookingEvent['event']>(event: T, ...args: SinnaBookingEventMap[T] extends undefined ? [] : [properties: SinnaBookingEventMap[T]]): void;
 /**
- * Track a Dineout restaurant reservation event across all platforms.
- * All events require a flow_id to connect events across domains.
+ * Track a Dineout restaurant reservation checkout event across all platforms.
  * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  *
  * @example
- * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
- * trackDineout('Reservation Time Selected', { flow_id: 'abc123', dateTime: '2026-01-15T19:00', guests: 4 });
- * trackDineout('Reservation Completed', { flow_id: 'abc123', reservation_id: 'res-456', payment_required: false });
+ * trackDineout('Reservation Checkout Loaded', { restaurant_id: 'rest-1', dateTime: '2026-01-15T19:00', guests: 4 });
+ * trackDineout('Reservation Completed', { reservation_id: 'res-456', payment_required: false });
  */
 export declare function trackDineout<T extends DineoutReservationEvent['event']>(event: T, ...args: DineoutReservationEventMap[T] extends undefined ? [] : [properties: DineoutReservationEventMap[T]]): void;
+/**
+ * Track a Dineout discovery/navigation event across all platforms.
+ * Use this for frontpage interactions, search, book-a-table, and reservation selection events.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
+ *
+ * @example
+ * trackDineoutDiscovery('Restaurant Clicked', { restaurant_id: 'rest-1', source: 'frontpage' });
+ * trackDineoutDiscovery('Search Opened');
+ * trackDineoutDiscovery('Reservation Flow Started', { company_id: 'comp-1' });
+ */
+export declare function trackDineoutDiscovery<T extends DineoutDiscoveryEvent['event']>(event: T, ...args: DineoutDiscoveryEventMap[T] extends undefined ? [] : [properties: DineoutDiscoveryEventMap[T]]): void;
 /**
  * Identify a user for tracking.
  * Call this after the user enters their contact info or logs in.

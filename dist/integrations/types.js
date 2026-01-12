@@ -4,7 +4,7 @@
 export const verbose = true;
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.4.1';
+export const currentVersion = '1.4.4';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
@@ -64,6 +64,19 @@ export const EVENT_MAP = {
         fb: 'ReservationFailed',
         fbCustom: true,
     },
+    // -------------------------------------------------------------------------
+    // Dineout Discovery (dineout.is frontpage & book-a-table)
+    // -------------------------------------------------------------------------
+    'Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    'CTA Button Clicked': { ga4: 'cta_clicked', fb: 'CTAButtonClicked', fbCustom: true },
+    'Event Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    'Takeaway Category Clicked': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
+    'Bottom Nav Clicked': { ga4: 'bottom_nav_clicked', fb: 'BottomNavClicked', fbCustom: true },
+    'Top Nav Clicked': { ga4: 'top_nav_clicked', fb: 'TopNavClicked', fbCustom: true },
+    'Search Opened': { ga4: 'search', fb: 'Search', fbCustom: false },
+    'Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    'Quick Book Clicked': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
     // -------------------------------------------------------------------------
     // Generic
     // -------------------------------------------------------------------------

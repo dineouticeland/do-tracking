@@ -11,6 +11,8 @@ import {
     SinnaBookingEventMap,
     DineoutReservationEvent,
     DineoutReservationEventMap,
+    DineoutDiscoveryEvent,
+    DineoutDiscoveryEventMap,
     trackLog,
     detectPlatform,
     clearIntegrations,
@@ -37,6 +39,7 @@ export type {
     TrackableEvent,
     SinnaBookingEvent,
     DineoutReservationEvent,
+    DineoutDiscoveryEvent,
 } from './integrations/index.js';
 
 export type DineoutTrackingProps = {
@@ -116,6 +119,7 @@ declare global {
     interface Window {
         trackSinna?: typeof trackSinna;
         trackDineout?: typeof trackDineout;
+        trackDineoutDiscovery?: typeof trackDineoutDiscovery;
         /** @deprecated Use trackSinna or trackDineout instead */
         sendDineoutEvent?: TrackingEventFunction;
     }
@@ -167,22 +171,42 @@ export function trackSinna<T extends SinnaBookingEvent['event']>(
 }
 
 // ============================================================================
-// DINEOUT RESERVATION TRACKING (dineout.is -> booking.dineout.is)
+// DINEOUT RESERVATION TRACKING (booking.dineout.is checkout)
 // ============================================================================
 
 /**
- * Track a Dineout restaurant reservation event across all platforms.
- * All events require a flow_id to connect events across domains.
+ * Track a Dineout restaurant reservation checkout event across all platforms.
  * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
  * 
  * @example
- * trackDineout('Reservation Flow Started', { flow_id: 'abc123', company_id: 'rest-1' });
- * trackDineout('Reservation Time Selected', { flow_id: 'abc123', dateTime: '2026-01-15T19:00', guests: 4 });
- * trackDineout('Reservation Completed', { flow_id: 'abc123', reservation_id: 'res-456', payment_required: false });
+ * trackDineout('Reservation Checkout Loaded', { restaurant_id: 'rest-1', dateTime: '2026-01-15T19:00', guests: 4 });
+ * trackDineout('Reservation Completed', { reservation_id: 'res-456', payment_required: false });
  */
 export function trackDineout<T extends DineoutReservationEvent['event']>(
     event: T,
     ...args: DineoutReservationEventMap[T] extends undefined ? [] : [properties: DineoutReservationEventMap[T]]
+): void {
+    const properties = args[0] as Record<string, any> | undefined;
+    internalTrack(event, properties);
+}
+
+// ============================================================================
+// DINEOUT DISCOVERY TRACKING (dineout.is frontpage & book-a-table)
+// ============================================================================
+
+/**
+ * Track a Dineout discovery/navigation event across all platforms.
+ * Use this for frontpage interactions, search, book-a-table, and reservation selection events.
+ * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
+ * 
+ * @example
+ * trackDineoutDiscovery('Restaurant Clicked', { restaurant_id: 'rest-1', source: 'frontpage' });
+ * trackDineoutDiscovery('Search Opened');
+ * trackDineoutDiscovery('Reservation Flow Started', { company_id: 'comp-1' });
+ */
+export function trackDineoutDiscovery<T extends DineoutDiscoveryEvent['event']>(
+    event: T,
+    ...args: DineoutDiscoveryEventMap[T] extends undefined ? [] : [properties: DineoutDiscoveryEventMap[T]]
 ): void {
     const properties = args[0] as Record<string, any> | undefined;
     internalTrack(event, properties);
@@ -274,6 +298,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
 
     useEffect(() => {
         if (init) return;
+        
         if (companyIdentifier?.length > 0) {
             setInit(true);
             fetchTrackingConfig(companyIdentifier).then((config) => {
@@ -308,6 +333,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
         // Expose functions globally
         window.trackSinna = trackSinna;
         window.trackDineout = trackDineout;
+        window.trackDineoutDiscovery = trackDineoutDiscovery;
         window.sendDineoutEvent = sendDineoutEvent;
     }, [init, companyIdentifier, platform, userId]);
 
