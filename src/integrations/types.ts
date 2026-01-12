@@ -121,6 +121,7 @@ export type DineoutDiscoveryEvent =
     | { event: 'Takeaway Category Clicked'; payload: { category_id: string; category_name?: string } }
     | { event: 'Bottom Nav Clicked'; payload: { nav_item: string; destination_url?: string; position?: number } }
     | { event: 'Top Nav Clicked'; payload: { nav_item: string; destination_url?: string } }
+    | { event: 'Navigation Box Clicked'; payload: { box_name: string; destination_url?: string; position?: number } }
     | { event: 'Search Opened' }
     | { event: 'Search Result Clicked'; payload: { restaurant_id: string; restaurant_name?: string; search_query?: string } }
     // Book a table screen events
@@ -218,6 +219,7 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     'Takeaway Category Clicked': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
     'Bottom Nav Clicked': { ga4: 'bottom_nav_clicked', fb: 'BottomNavClicked', fbCustom: true },
     'Top Nav Clicked': { ga4: 'top_nav_clicked', fb: 'TopNavClicked', fbCustom: true },
+    'Navigation Box Clicked': { ga4: 'navigation_box_clicked', fb: 'NavigationBoxClicked', fbCustom: true },
     'Search Opened': { ga4: 'search', fb: 'Search', fbCustom: false },
     'Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },

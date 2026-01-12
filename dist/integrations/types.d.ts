@@ -227,6 +227,13 @@ export type DineoutDiscoveryEvent = {
         destination_url?: string;
     };
 } | {
+    event: 'Navigation Box Clicked';
+    payload: {
+        box_name: string;
+        destination_url?: string;
+        position?: number;
+    };
+} | {
     event: 'Search Opened';
 } | {
     event: 'Search Result Clicked';

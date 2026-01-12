@@ -73,6 +73,7 @@ export const EVENT_MAP = {
     'Takeaway Category Clicked': { ga4: 'view_item_list', fb: 'ViewContent', fbCustom: false },
     'Bottom Nav Clicked': { ga4: 'bottom_nav_clicked', fb: 'BottomNavClicked', fbCustom: true },
     'Top Nav Clicked': { ga4: 'top_nav_clicked', fb: 'TopNavClicked', fbCustom: true },
+    'Navigation Box Clicked': { ga4: 'navigation_box_clicked', fb: 'NavigationBoxClicked', fbCustom: true },
     'Search Opened': { ga4: 'search', fb: 'Search', fbCustom: false },
     'Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
