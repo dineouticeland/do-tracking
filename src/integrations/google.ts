@@ -2,7 +2,7 @@
 // GOOGLE ANALYTICS (GA4) AND GTM INTEGRATION
 // ============================================================================
 
-import { trackLog, injectScriptOnce, addIntegration, mapFacebookToGA4 } from './types';
+import { trackLog, injectScriptOnce, addIntegration, mapFacebookToGA4 } from './types.js';
 
 declare global {
     interface Window {

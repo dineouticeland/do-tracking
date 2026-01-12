@@ -3,7 +3,7 @@
 // ============================================================================
 
 import mixpanel from 'mixpanel-browser';
-import { trackLog, verbose, Platform, TrackableEvent, TrackableEventMap } from './types';
+import { trackLog, verbose, Platform, TrackableEvent, TrackableEventMap } from './types.js';
 
 // Re-export for backwards compatibility
 /** @deprecated Use TrackableEvent from types instead */

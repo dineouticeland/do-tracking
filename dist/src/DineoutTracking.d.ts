@@ -1,5 +1,5 @@
-import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap } from './integrations';
-export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, } from './integrations';
+import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap } from './integrations/index.js';
+export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, } from './integrations/index.js';
 export type DineoutTrackingProps = {
     companyIdentifier: string;
     platform?: Platform;

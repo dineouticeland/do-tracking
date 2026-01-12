@@ -2,7 +2,7 @@
 // FACEBOOK PIXEL INTEGRATION
 // ============================================================================
 
-import { trackLog, injectScriptOnce, addIntegration } from './types';
+import { trackLog, injectScriptOnce, addIntegration } from './types.js';
 
 declare global {
     interface Fbq {

@@ -2,7 +2,7 @@
 // MIXPANEL INTEGRATION
 // ============================================================================
 import mixpanel from 'mixpanel-browser';
-import { trackLog, verbose } from './types';
+import { trackLog, verbose } from './types.js';
 // ============================================================================
 // MIXPANEL STATE
 // ============================================================================

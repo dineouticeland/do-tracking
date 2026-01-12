@@ -26,7 +26,7 @@ import {
     trackToFBPixel,
     identifyUser as identifyMixpanelUser,
     resetMixpanel,
-} from './integrations';
+} from './integrations/index.js';
 
 // ============================================================================
 // EXPORTED TYPES
@@ -37,7 +37,7 @@ export type {
     TrackableEvent,
     SinnaBookingEvent,
     DineoutReservationEvent,
-} from './integrations';
+} from './integrations/index.js';
 
 export type DineoutTrackingProps = {
     companyIdentifier: string;

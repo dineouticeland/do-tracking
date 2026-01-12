@@ -1,4 +1,4 @@
-import { Platform, TrackableEvent, TrackableEventMap } from './types';
+import { Platform, TrackableEvent, TrackableEventMap } from './types.js';
 /** @deprecated Use TrackableEvent from types instead */
 export type BookingFunnelEvent = TrackableEvent;
 export type InitMixpanelOptions = {

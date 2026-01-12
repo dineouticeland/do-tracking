@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { DineoutTracking, trackSinna, trackDineout, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking";
+import { DineoutTracking, trackSinna, trackDineout, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking.js";
 
 const TEST_USERS = [
     { id: null, name: 'Anonymous (No User)' },
@@ -43,9 +43,9 @@ export default function TestApp() {
                     type="text" 
                     placeholder="Company slug or ID"
                     style={{ padding: 8, marginRight: 8, width: 200 }}
-                    onChange={(e) => {
-                        setInitialised(false);
-                        setCompanyIdentifier(e.target.value);
+                       onChange={(e) => {
+                           setInitialised(false);
+                           setCompanyIdentifier(e.target.value);
                     }}
                 />
                 <button 
@@ -56,8 +56,8 @@ export default function TestApp() {
                 </button>
             </div>
 
-            {companyIdentifier && initialised && (
-                <>
+                {companyIdentifier && initialised && (
+                    <>
                     <DineoutTracking companyIdentifier={companyIdentifier} />
                     
                     {/* User Selection */}
@@ -308,9 +308,9 @@ export default function TestApp() {
                             </button>
                         </div>
                     </section>
-                </>
-            )}
-        </div>
+                    </>
+                )}
+            </div>
     );
 }
 

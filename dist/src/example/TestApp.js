@@ -1,7 +1,7 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { DineoutTracking, trackSinna, trackDineout, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking";
+import { DineoutTracking, trackSinna, trackDineout, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking.js";
 const TEST_USERS = [
     { id: null, name: 'Anonymous (No User)' },
     { id: 'gummi-cray-001', name: 'GUMMI CRAY' },

@@ -22,7 +22,7 @@ export type {
     TrackMethod,
     EventMap,
     TrackingEventFunction,
-} from './types';
+} from './types.js';
 
 export {
     trackLog,
@@ -38,14 +38,14 @@ export {
     addIntegration,
     injectScriptOnce,
     mapFacebookToGA4,
-} from './types';
+} from './types.js';
 
 // Facebook Pixel
 export {
     initFacebookPixel,
     trackToFBPixel,
     isFBPixelInitialized,
-} from './facebook';
+} from './facebook.js';
 
 // Google Analytics & GTM
 export {
@@ -55,10 +55,10 @@ export {
     trackToGTM,
     isGA4Initialized,
     isGTMInitialized,
-} from './google';
+} from './google.js';
 
 // Mixpanel
-export type { BookingFunnelEvent, InitMixpanelOptions } from './mixpanel';
+export type { BookingFunnelEvent, InitMixpanelOptions } from './mixpanel.js';
 export {
     initMixpanel,
     trackToMixpanel,
@@ -69,4 +69,4 @@ export {
     isMixpanelInitialized,
     getCurrentPlatform,
     getCurrentCompanyId,
-} from './mixpanel';
+} from './mixpanel.js';
