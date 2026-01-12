@@ -139,20 +139,31 @@ declare global {
  * Internal function to send event to all platforms (or queue if not initialized)
  */
 function internalTrack(event: string, properties?: Record<string, any>): void {
-    trackLog(`track: ${event}`);
+    // Handle Custom events - use eventName as the actual event name
+    let actualEvent = event;
+    let actualProperties = properties;
+    
+    if (event === 'Custom' && properties?.eventName) {
+        actualEvent = properties.eventName;
+        // Remove eventName from properties sent to platforms
+        const { eventName, ...rest } = properties;
+        actualProperties = rest;
+    }
+    
+    trackLog(`track: ${actualEvent}`);
     
     if (!isTrackingInitialized) {
         // Queue the event for later
-        trackLog(`Queueing event (tracking not initialized): ${event}`);
+        trackLog(`Queueing event (tracking not initialized): ${actualEvent}`);
         eventQueue.push({
-            event,
-            properties,
+            event: actualEvent,
+            properties: actualProperties,
             timestamp: Date.now(),
         });
         return;
     }
     
-    sendEventToAllPlatforms(event, properties);
+    sendEventToAllPlatforms(actualEvent, actualProperties);
 }
 
 // ============================================================================

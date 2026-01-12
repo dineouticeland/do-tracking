@@ -104,6 +104,12 @@ export type SinnaBookingEvent = {
         type?: string;
         reason?: string;
     };
+} | {
+    event: 'Custom';
+    payload: {
+        eventName: string;
+        [key: string]: any;
+    };
 };
 export type SinnaBookingEventMap = {
     [T in SinnaBookingEvent as T['event']]: T extends {
@@ -169,6 +175,12 @@ export type DineoutReservationEvent = {
     };
 } | {
     event: 'Reservation Hold Expired';
+} | {
+    event: 'Custom';
+    payload: {
+        eventName: string;
+        [key: string]: any;
+    };
 };
 export type DineoutReservationEventMap = {
     [T in DineoutReservationEvent as T['event']]: T extends {
@@ -268,6 +280,12 @@ export type DineoutDiscoveryEvent = {
     event: 'Reservation Redirected To Checkout';
     payload: {
         target: string;
+    };
+} | {
+    event: 'Custom';
+    payload: {
+        eventName: string;
+        [key: string]: any;
     };
 };
 export type DineoutDiscoveryEventMap = {

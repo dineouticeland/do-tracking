@@ -76,6 +76,8 @@ export type SinnaBookingEvent =
     | { event: 'Booking Payment Failed'; payload: { provider?: string; reason?: string, card_provider?: string, card_type?: string } }
     | { event: 'Booking Completed'; payload: { bookingId?: string; totalAmount?: number; currency?: string, type?: 'redirect' | 'normal' | 'waiting_list' } }
     | { event: 'Booking Failed'; payload: { bookingId?: string; totalAmount?: number; currency?: string; type?:string, reason?:string } }
+    // Custom event - for any untyped/ad-hoc tracking
+    | { event: 'Custom'; payload: { eventName: string; [key: string]: any } }
     ;
 
 // Extract payload type for Sinna events
@@ -98,6 +100,8 @@ export type DineoutReservationEvent =
     | { event: 'Reservation Completed'; payload: { reservation_id: string; amount_paid?: number; currency?: string; payment_required: boolean } }
     | { event: 'Reservation Failed'; payload: { reservation_id?: string; type?: string; reason?: string } }
     | { event: 'Reservation Hold Expired' }
+    // Custom event - for any untyped/ad-hoc tracking
+    | { event: 'Custom'; payload: { eventName: string; [key: string]: any } }
     ;
 
 // Extract payload type for Dineout events
@@ -129,6 +133,8 @@ export type DineoutDiscoveryEvent =
     | { event: 'Reservation Guests Selected'; payload: { guests: number } }
     | { event: 'Reservation Time Selected'; payload: { dateTime: string; guests: number } }
     | { event: 'Reservation Redirected To Checkout'; payload: { target: string } }
+    // Custom event - for any untyped/ad-hoc tracking
+    | { event: 'Custom'; payload: { eventName: string; [key: string]: any } }
     ;
 
 // Extract payload type for Dineout Discovery events
