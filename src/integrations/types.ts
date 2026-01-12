@@ -3,9 +3,10 @@
 // ============================================================================
 
 export const verbose = true;
-import pkg from '../../package.json';
 
-export const currentVersion = pkg.version;
+// Version is hardcoded to avoid JSON import issues in ESM
+// Update this when releasing a new version
+export const currentVersion = '1.4.1';
 
 export const trackLog = (info: string) => {
     if (verbose) {

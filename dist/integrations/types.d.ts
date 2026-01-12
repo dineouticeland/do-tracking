@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion: string;
+export declare const currentVersion = "1.4.1";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;

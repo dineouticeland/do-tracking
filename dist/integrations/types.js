@@ -2,8 +2,9 @@
 // SHARED TYPES AND UTILITIES
 // ============================================================================
 export const verbose = true;
-import pkg from '../../package.json';
-export const currentVersion = pkg.version;
+// Version is hardcoded to avoid JSON import issues in ESM
+// Update this when releasing a new version
+export const currentVersion = '1.4.1';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
