@@ -234,13 +234,45 @@ export type DineoutDiscoveryEvent = {
         position?: number;
     };
 } | {
-    event: 'Search Opened';
+    event: 'Nav Search Clicked';
 } | {
-    event: 'Search Result Clicked';
+    event: 'Nav Search Result Clicked';
     payload: {
         restaurant_id: string;
         restaurant_name?: string;
         search_query?: string;
+    };
+} | {
+    event: 'Takeaway Search';
+    payload: {
+        query?: string;
+        categories?: string[];
+        cityIds?: string[];
+        [key: string]: any;
+    };
+} | {
+    event: 'Takeaway Search Result Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+        search_query?: string;
+    };
+} | {
+    event: 'Reservation Search';
+    payload: {
+        guests?: number;
+        dateTime?: string;
+        cityIds?: string[];
+        categories?: string[];
+        type?: string;
+        customDateType?: string;
+        [key: string]: any;
+    };
+} | {
+    event: 'Reservation Search Result Clicked';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
     };
 } | {
     event: 'Table Restaurant Clicked';

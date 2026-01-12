@@ -74,8 +74,15 @@ export const EVENT_MAP = {
     'Bottom Nav Clicked': { ga4: 'bottom_nav_clicked', fb: 'BottomNavClicked', fbCustom: true },
     'Top Nav Clicked': { ga4: 'top_nav_clicked', fb: 'TopNavClicked', fbCustom: true },
     'Navigation Box Clicked': { ga4: 'navigation_box_clicked', fb: 'NavigationBoxClicked', fbCustom: true },
-    'Search Opened': { ga4: 'search', fb: 'Search', fbCustom: false },
-    'Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    // Nav search
+    'Nav Search Clicked': { ga4: 'search', fb: 'Search', fbCustom: false },
+    'Nav Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    // Takeaway search
+    'Takeaway Search': { ga4: 'search', fb: 'Search', fbCustom: false },
+    'Takeaway Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
+    // Reservation search
+    'Reservation Search': { ga4: 'search', fb: 'Search', fbCustom: false },
+    'Reservation Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Quick Book Clicked': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
     // -------------------------------------------------------------------------
