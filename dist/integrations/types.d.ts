@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.4.5";
+export declare const currentVersion = "1.5.0";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -289,7 +289,7 @@ export type DineoutDiscoveryEvent = {
 } | {
     event: 'Reservation Step Viewed';
     payload: {
-        step: 'date' | 'guest' | 'time' | 'checkout' | 'reciept';
+        step: 'date' | 'guest' | 'time' | 'reserve' | 'upsell' | 'confirmation' | 'checkout' | 'reciept';
     };
 } | {
     event: 'Reservation Flow Started';

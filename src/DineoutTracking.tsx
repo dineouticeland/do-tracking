@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
     Platform,
     TrackingConfig,
@@ -380,6 +380,7 @@ let currentCompanyIdentifier: string | undefined = undefined;
 
 export function DineoutTracking({ companyIdentifier, platform, userId }: DineoutTrackingProps) {
     const [initKey, setInitKey] = useState<string | undefined>(undefined);
+    const requestIdRef = useRef(0);
 
     useEffect(() => {
         // Skip if already initialized with the same companyIdentifier
@@ -388,7 +389,16 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
         const newInitKey = companyIdentifier ?? '__dineout_only__';
         setInitKey(newInitKey);
         
+        // Increment request ID to track the latest request
+        const thisRequestId = ++requestIdRef.current;
+        
         fetchTrackingConfig(companyIdentifier).then((config) => {
+            // Ignore stale responses - only process the latest request
+            if (thisRequestId !== requestIdRef.current) {
+                trackLog(`Ignoring stale response for ${companyIdentifier ?? 'dineout-only'} (request ${thisRequestId}, current ${requestIdRef.current})`);
+                return;
+            }
+            
             // Only clear integrations if this is a NEW restaurant (not just re-init)
             if (currentCompanyIdentifier !== companyIdentifier) {
                 trackLog(`Switching from ${currentCompanyIdentifier ?? 'none'} to ${companyIdentifier ?? 'dineout-only'}`);

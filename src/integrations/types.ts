@@ -6,7 +6,7 @@ export const verbose = true;
 
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.4.5';
+export const currentVersion = '1.5.0';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -135,7 +135,7 @@ export type DineoutDiscoveryEvent =
     | { event: 'Table Restaurant Clicked'; payload: { restaurant_id: string; restaurant_name?: string } }
     | { event: 'Quick Book Clicked'; payload: { restaurant_id: string; restaurant_name?: string } }
     // Reservation selection events (dineout.is - before redirect to checkout)
-    | { event: 'Reservation Step Viewed'; payload: { step: 'date' | 'guest' | 'time' | 'checkout' | 'reciept' } }
+    | { event: 'Reservation Step Viewed'; payload: { step: 'date' | 'guest' | 'time' |'reserve' | 'upsell'| 'confirmation'|'checkout' | 'reciept' } }
     | { event: 'Reservation Flow Started'; payload: { company_id: string; restaurant_id?: string; lng?: string; source?: string } }
     | { event: 'Reservation Date Selected'; payload: { date: string } }
     | { event: 'Reservation Guests Selected'; payload: { guests: number } }

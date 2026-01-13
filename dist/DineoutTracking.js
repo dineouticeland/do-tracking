@@ -10,7 +10,7 @@ var __rest = (this && this.__rest) || function (s, e) {
         }
     return t;
 };
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { trackLog, detectPlatform, clearIntegrations, DO_TRACKING_INTEGRATIONS, mapEventName, initFacebookPixel, initGA4, initGTM, initMixpanel, trackToMixpanel, trackToGA4, trackToGTM, trackToFBPixel, identifyUser as identifyMixpanelUser, resetMixpanel, } from './integrations/index.js';
 let eventQueue = [];
 let isTrackingInitialized = false;
@@ -267,14 +267,22 @@ async function fetchTrackingConfig(companyIdentifier) {
 let currentCompanyIdentifier = undefined;
 export function DineoutTracking({ companyIdentifier, platform, userId }) {
     const [initKey, setInitKey] = useState(undefined);
+    const requestIdRef = useRef(0);
     useEffect(() => {
         // Skip if already initialized with the same companyIdentifier
         if (initKey === (companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : '__dineout_only__'))
             return;
         const newInitKey = companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : '__dineout_only__';
         setInitKey(newInitKey);
+        // Increment request ID to track the latest request
+        const thisRequestId = ++requestIdRef.current;
         fetchTrackingConfig(companyIdentifier).then((config) => {
             var _a, _b, _c, _d, _e, _f;
+            // Ignore stale responses - only process the latest request
+            if (thisRequestId !== requestIdRef.current) {
+                trackLog(`Ignoring stale response for ${companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : 'dineout-only'} (request ${thisRequestId}, current ${requestIdRef.current})`);
+                return;
+            }
             // Only clear integrations if this is a NEW restaurant (not just re-init)
             if (currentCompanyIdentifier !== companyIdentifier) {
                 trackLog(`Switching from ${currentCompanyIdentifier !== null && currentCompanyIdentifier !== void 0 ? currentCompanyIdentifier : 'none'} to ${companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : 'dineout-only'}`);
