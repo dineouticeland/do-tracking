@@ -8,7 +8,7 @@ export type TrackingConfig = {
     gTagId?: string | null;
     gaTrackingId?: string | null;
     dineoutFbPixelId?: string | null;
-    dineoutGaTrackingId?: string | null;
+    DineoutGATrackingId?: string | null;
     sinnaFbPixelId?: string | null;
     sinnaGaTrackingId?: string | null;
     dineoutMixpanelToken?: string | null;

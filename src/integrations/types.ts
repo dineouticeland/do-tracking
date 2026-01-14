@@ -39,7 +39,7 @@ export type TrackingConfig = {
     
     // Dineout site-wide tracking (events tracked to Dineout's accounts)
     dineoutFbPixelId?: string | null;
-    dineoutGaTrackingId?: string | null;    
+    DineoutGATrackingId?: string | null;    
 
     sinnaFbPixelId?: string | null;
     sinnaGaTrackingId?: string | null;

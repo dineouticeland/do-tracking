@@ -291,7 +291,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
             }
             const resolvedPlatform = platform !== null && platform !== void 0 ? platform : detectPlatform();
             if (resolvedPlatform === 'dineout') {
-                (_a = config.dineoutGaTrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(id => {
+                (_a = config.DineoutGATrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Dineout GA4: ${id}`);
                     initGA4(id);
                 });
