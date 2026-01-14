@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.5.0";
+export declare const currentVersion = "1.5.1";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -157,6 +157,20 @@ export type DineoutReservationEvent = {
         provider?: string;
         error_code?: string;
         card_provider?: string;
+    };
+} | {
+    event: 'Reservation Payment Redirect';
+    payload: {
+        provider?: string;
+        redirect_type: '3ds' | 'other';
+        amount?: number;
+        currency?: string;
+    };
+} | {
+    event: 'Reservation Verification Needed';
+    payload: {
+        verification_type: 'email' | 'phone' | 'other';
+        reservation_id?: string;
     };
 } | {
     event: 'Reservation Completed';

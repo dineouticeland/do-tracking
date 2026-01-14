@@ -6,7 +6,7 @@ export const verbose = true;
 
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.5.0';
+export const currentVersion = '1.5.1';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -97,6 +97,8 @@ export type DineoutReservationEvent =
     | { event: 'Payment Required Shown'; payload: { required: boolean; amount?: number; currency?: string; reason?: string } }
     | { event: 'Reservation Payment Started'; payload: { amount: number; currency: string; provider?: string } }
     | { event: 'Reservation Payment Failed'; payload: { provider?: string; error_code?: string; card_provider?: string } }
+    | { event: 'Reservation Payment Redirect'; payload: { provider?: string; redirect_type: '3ds' | 'other'; amount?: number; currency?: string } }
+    | { event: 'Reservation Verification Needed'; payload: { verification_type: 'email' | 'phone' | 'other'; reservation_id?: string } }
     | { event: 'Reservation Completed'; payload: { reservation_id: string; amount_paid?: number; currency?: string; payment_required: boolean } }
     | { event: 'Reservation Failed'; payload: { reservation_id?: string; type?: string; reason?: string } }
     | { event: 'Reservation Hold Expired' }
@@ -210,6 +212,8 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
     'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
     'Reservation Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
+    'Reservation Payment Redirect': { ga4: 'payment_redirect', fb: 'PaymentRedirect', fbCustom: true },
+    'Reservation Verification Needed': { ga4: 'verification_needed', fb: 'VerificationNeeded', fbCustom: true },
     'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
     "Reservation Failed": {
