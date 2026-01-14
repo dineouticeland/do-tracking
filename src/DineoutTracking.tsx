@@ -444,10 +444,10 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             // ---------------------------------------------------------------
             // Mixpanel (Dineout funnel analytics)
             // ---------------------------------------------------------------
-            if (config.mixpanelToken && config.companyId) {
+            if (config.dineoutMixpanelToken && config.companyId) {
                 const resolvedPlatform = platform ?? detectPlatform();
                 initMixpanel({
-                    token: config.mixpanelToken,
+                    token: config.dineoutMixpanelToken,
                     companyId: config.companyId,
                     platform: resolvedPlatform,
                     userId,

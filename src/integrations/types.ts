@@ -6,7 +6,7 @@ export const verbose = true;
 
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.5.1';
+export const currentVersion = '1.5.2';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -40,10 +40,10 @@ export type TrackingConfig = {
     // Dineout site-wide tracking (events tracked to Dineout's accounts)
     dineoutFbPixelId?: string | null;
     dineoutGTagId?: string | null;
-    dineoutGaTrackingId?: string | null;
-    
+    dineoutGaTrackingId?: string | null;    
     // Mixpanel (Dineout only - for funnel analytics)
-    mixpanelToken?: string | null;
+    dineoutMixpanelToken?: string | null;
+
     companyId?: string | null;
 };
 
