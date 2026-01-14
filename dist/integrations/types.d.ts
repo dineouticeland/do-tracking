@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.5.4";
+export declare const currentVersion = "1.5.5";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -8,7 +8,7 @@ export type TrackingConfig = {
     gTagId?: string | null;
     gaTrackingId?: string | null;
     dineoutFbPixelId?: string | null;
-    DineoutGATrackingId?: string | null;
+    dineoutGATrackingId?: string | null;
     sinnaFbPixelId?: string | null;
     sinnaGaTrackingId?: string | null;
     dineoutMixpanelToken?: string | null;
