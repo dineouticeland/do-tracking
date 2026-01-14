@@ -406,21 +406,30 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
                 currentCompanyIdentifier = companyIdentifier;
             }
 
-            // ---------------------------------------------------------------
-            // Dineout site-wide tracking (all events go to Dineout's accounts)
-            // ---------------------------------------------------------------
-            config.dineoutGaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout GA4: ${id}`);
-                initGA4(id);
-            });
-            config.dineoutGTagId?.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout GTM: ${id}`);
-                initGTM(id);
-            });
-            config.dineoutFbPixelId?.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout FB Pixel: ${id}`);
-                initFacebookPixel(id);
-            });
+            const resolvedPlatform = platform ?? detectPlatform();
+
+            if (resolvedPlatform === 'dineout') {
+                config.dineoutGaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Dineout GA4: ${id}`);
+                    initGA4(id);
+                });
+                config.dineoutFbPixelId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Dineout FB Pixel: ${id}`);
+                    initFacebookPixel(id);
+                });
+           
+            } else if (resolvedPlatform === 'sinna') {
+                config.sinnaGaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Sinna GA4: ${id}`);
+                    initGA4(id);
+                });
+                config.sinnaFbPixelId?.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Sinna FB Pixel: ${id}`);
+                    initFacebookPixel(id);
+                });
+         
+            }
+                
 
             // ---------------------------------------------------------------
             // Restaurant-specific tracking (events also go to restaurant's accounts)
@@ -445,7 +454,6 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             // Mixpanel (Dineout funnel analytics)
             // ---------------------------------------------------------------
             if (config.dineoutMixpanelToken && config.companyId) {
-                const resolvedPlatform = platform ?? detectPlatform();
                 initMixpanel({
                     token: config.dineoutMixpanelToken,
                     companyId: config.companyId,

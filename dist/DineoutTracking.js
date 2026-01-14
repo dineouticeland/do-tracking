@@ -277,7 +277,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
         // Increment request ID to track the latest request
         const thisRequestId = ++requestIdRef.current;
         fetchTrackingConfig(companyIdentifier).then((config) => {
-            var _a, _b, _c, _d, _e, _f;
+            var _a, _b, _c, _d, _e, _f, _g;
             // Ignore stale responses - only process the latest request
             if (thisRequestId !== requestIdRef.current) {
                 trackLog(`Ignoring stale response for ${companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : 'dineout-only'} (request ${thisRequestId}, current ${requestIdRef.current})`);
@@ -289,35 +289,41 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
                 clearIntegrations();
                 currentCompanyIdentifier = companyIdentifier;
             }
-            // ---------------------------------------------------------------
-            // Dineout site-wide tracking (all events go to Dineout's accounts)
-            // ---------------------------------------------------------------
-            (_a = config.dineoutGaTrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout GA4: ${id}`);
-                initGA4(id);
-            });
-            (_b = config.dineoutGTagId) === null || _b === void 0 ? void 0 : _b.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout GTM: ${id}`);
-                initGTM(id);
-            });
-            (_c = config.dineoutFbPixelId) === null || _c === void 0 ? void 0 : _c.split(',').map(id => id.trim()).forEach(id => {
-                trackLog(`Initializing Dineout FB Pixel: ${id}`);
-                initFacebookPixel(id);
-            });
+            const resolvedPlatform = platform !== null && platform !== void 0 ? platform : detectPlatform();
+            if (resolvedPlatform === 'dineout') {
+                (_a = config.dineoutGaTrackingId) === null || _a === void 0 ? void 0 : _a.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Dineout GA4: ${id}`);
+                    initGA4(id);
+                });
+                (_b = config.dineoutFbPixelId) === null || _b === void 0 ? void 0 : _b.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Dineout FB Pixel: ${id}`);
+                    initFacebookPixel(id);
+                });
+            }
+            else if (resolvedPlatform === 'sinna') {
+                (_c = config.sinnaGaTrackingId) === null || _c === void 0 ? void 0 : _c.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Sinna GA4: ${id}`);
+                    initGA4(id);
+                });
+                (_d = config.sinnaFbPixelId) === null || _d === void 0 ? void 0 : _d.split(',').map(id => id.trim()).forEach(id => {
+                    trackLog(`Initializing Sinna FB Pixel: ${id}`);
+                    initFacebookPixel(id);
+                });
+            }
             // ---------------------------------------------------------------
             // Restaurant-specific tracking (events also go to restaurant's accounts)
             // Only if companyIdentifier is provided
             // ---------------------------------------------------------------
             if (companyIdentifier) {
-                (_d = config.gaTrackingId) === null || _d === void 0 ? void 0 : _d.split(',').map(id => id.trim()).forEach(id => {
+                (_e = config.gaTrackingId) === null || _e === void 0 ? void 0 : _e.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GA4: ${id}`);
                     initGA4(id);
                 });
-                (_e = config.gTagId) === null || _e === void 0 ? void 0 : _e.split(',').map(id => id.trim()).forEach(id => {
+                (_f = config.gTagId) === null || _f === void 0 ? void 0 : _f.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GTM: ${id}`);
                     initGTM(id);
                 });
-                (_f = config.fbPixelId) === null || _f === void 0 ? void 0 : _f.split(',').map(id => id.trim()).forEach(id => {
+                (_g = config.fbPixelId) === null || _g === void 0 ? void 0 : _g.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant FB Pixel: ${id}`);
                     initFacebookPixel(id);
                 });
@@ -325,10 +331,9 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
             // ---------------------------------------------------------------
             // Mixpanel (Dineout funnel analytics)
             // ---------------------------------------------------------------
-            if (config.mixpanelToken && config.companyId) {
-                const resolvedPlatform = platform !== null && platform !== void 0 ? platform : detectPlatform();
+            if (config.dineoutMixpanelToken && config.companyId) {
                 initMixpanel({
-                    token: config.mixpanelToken,
+                    token: config.dineoutMixpanelToken,
                     companyId: config.companyId,
                     platform: resolvedPlatform,
                     userId,

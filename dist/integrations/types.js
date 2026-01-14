@@ -4,7 +4,7 @@
 export const verbose = true;
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.5.1';
+export const currentVersion = '1.5.3';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
