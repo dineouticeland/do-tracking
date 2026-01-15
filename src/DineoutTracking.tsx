@@ -407,7 +407,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             }
 
             const resolvedPlatform = platform ?? detectPlatform();
-
+            
             trackLog('resolvedPlatform: ' + resolvedPlatform);
             if (resolvedPlatform === 'dineout') {
                 config.dineoutGATrackingId?.split(',').map(id => id.trim()).forEach(id => {
