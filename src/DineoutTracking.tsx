@@ -349,11 +349,14 @@ const BASE_API_URL = () => {
             (typeof import.meta !== "undefined" && import.meta.env?.DEV) ||
             (typeof process !== "undefined" && process.env?.NODE_ENV !== "production");
 
-            console.log('isDev', isDev);
-
         if (isDev) {
             console.info("[Tracking]", "Running in development mode");
             return "http://localhost:9876";
+        }
+
+        // Check if running on QA environment
+        if (typeof window !== "undefined" && window.location.href.includes("qa")) {
+            return "https://api-qa.dineout.is";
         }
 
         return "https://api.dineout.is";
@@ -407,7 +410,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             }
 
             const resolvedPlatform = platform ?? detectPlatform();
-            
+
             trackLog('resolvedPlatform: ' + resolvedPlatform);
             if (resolvedPlatform === 'dineout') {
                 config.dineoutGATrackingId?.split(',').map(id => id.trim()).forEach(id => {
