@@ -26,7 +26,7 @@ export function initMixpanel({ token, companyId, platform, userId }) {
         track_pageview: false,
         autocapture: false, //if we want to capture everything
         record_sessions_percent: 0, //100 for development, 0 for development
-        persistence: 'localStorage',
+        persistence: 'cookie',
         api_host: 'https://api-eu.mixpanel.com',
         cross_subdomain_cookie: true, // Share distinct_id across *.dineout.is subdomains
     });
