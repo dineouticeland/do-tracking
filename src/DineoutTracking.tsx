@@ -423,7 +423,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
                 });
            
             } else if (resolvedPlatform === 'sinna') {
-                config.sinnaGaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+                config.sinnaGATrackingId?.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Sinna GA4: ${id}`);
                     initGA4(id);
                 });

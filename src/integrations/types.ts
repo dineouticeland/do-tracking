@@ -42,7 +42,7 @@ export type TrackingConfig = {
     dineoutGATrackingId?: string | null;    
 
     sinnaFbPixelId?: string | null;
-    sinnaGaTrackingId?: string | null;
+    sinnaGATrackingId?: string | null;
 
     // Mixpanel (Dineout only - for funnel analytics)
     dineoutMixpanelToken?: string | null;
