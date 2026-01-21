@@ -14,7 +14,8 @@
   "scripts": {
     "build": "tsc",
     "prepack": "pnpm run build",
-    "release": "./release.sh"
+    "release": "./release.sh",
+    "publish": "npm publish"
   },
   "peerDependencies": {
     "react": "^17 || ^18 || ^19"
