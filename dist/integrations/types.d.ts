@@ -10,7 +10,7 @@ export type TrackingConfig = {
     dineoutFbPixelId?: string | null;
     dineoutGATrackingId?: string | null;
     sinnaFbPixelId?: string | null;
-    sinnaGaTrackingId?: string | null;
+    sinnaGATrackingId?: string | null;
     dineoutMixpanelToken?: string | null;
     companyId?: string | null;
 };
