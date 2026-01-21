@@ -280,7 +280,7 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
         // Increment request ID to track the latest request
         const thisRequestId = ++requestIdRef.current;
         fetchTrackingConfig(companyIdentifier).then((config) => {
-            var _a, _b, _c, _d, _e, _f, _g;
+            var _a, _b, _c, _d, _e, _f, _g, _h;
             // Ignore stale responses - only process the latest request
             if (thisRequestId !== requestIdRef.current) {
                 trackLog(`Ignoring stale response for ${companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : 'dineout-only'} (request ${thisRequestId}, current ${requestIdRef.current})`);
@@ -335,10 +335,10 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
             // ---------------------------------------------------------------
             // Mixpanel (Dineout funnel analytics)
             // ---------------------------------------------------------------
-            if (config.dineoutMixpanelToken && config.companyId) {
+            if (config.dineoutMixpanelToken) {
                 initMixpanel({
                     token: config.dineoutMixpanelToken,
-                    companyId: config.companyId,
+                    companyId: (_h = config.companyId) !== null && _h !== void 0 ? _h : '',
                     platform: resolvedPlatform,
                     userId,
                 });

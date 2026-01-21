@@ -457,10 +457,10 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             // ---------------------------------------------------------------
             // Mixpanel (Dineout funnel analytics)
             // ---------------------------------------------------------------
-            if (config.dineoutMixpanelToken && config.companyId) {
+            if (config.dineoutMixpanelToken) {
                 initMixpanel({
                     token: config.dineoutMixpanelToken,
-                    companyId: config.companyId,
+                    companyId: config.companyId ?? '',
                     platform: resolvedPlatform,
                     userId,
                 });
