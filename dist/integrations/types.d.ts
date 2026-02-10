@@ -4,9 +4,9 @@ export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
 export type TrackingConfig = {
-    fbPixelId?: string | null;
-    gTagId?: string | null;
-    gaTrackingId?: string | null;
+    companyFbPixelId?: string | null;
+    companyGTagId?: string | null;
+    companyGATrackingId?: string | null;
     dineoutFbPixelId?: string | null;
     dineoutGATrackingId?: string | null;
     sinnaFbPixelId?: string | null;

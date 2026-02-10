@@ -33,9 +33,9 @@ export function detectPlatform(): Platform {
 
 export type TrackingConfig = {
     // Restaurant/Company-specific tracking (events tracked to restaurant's accounts)
-    fbPixelId?: string | null;
-    gTagId?: string | null;
-    gaTrackingId?: string | null;
+    companyFbPixelId?: string | null;
+    companyGTagId?: string | null;
+    companyGATrackingId?: string | null;
     
     // Dineout site-wide tracking (events tracked to Dineout's accounts)
     dineoutFbPixelId?: string | null;

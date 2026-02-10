@@ -318,16 +318,16 @@ export function DineoutTracking({ companyIdentifier, platform, userId }) {
             // Restaurant-specific tracking (events also go to restaurant's accounts)
             // Only if companyIdentifier is provided
             // ---------------------------------------------------------------
-            if (companyIdentifier) {
-                (_e = config.gaTrackingId) === null || _e === void 0 ? void 0 : _e.split(',').map(id => id.trim()).forEach(id => {
+            if (companyIdentifier || config.companyId) {
+                (_e = config.companyGATrackingId) === null || _e === void 0 ? void 0 : _e.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GA4: ${id}`);
                     initGA4(id);
                 });
-                (_f = config.gTagId) === null || _f === void 0 ? void 0 : _f.split(',').map(id => id.trim()).forEach(id => {
+                (_f = config.companyGTagId) === null || _f === void 0 ? void 0 : _f.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GTM: ${id}`);
                     initGTM(id);
                 });
-                (_g = config.fbPixelId) === null || _g === void 0 ? void 0 : _g.split(',').map(id => id.trim()).forEach(id => {
+                (_g = config.companyFbPixelId) === null || _g === void 0 ? void 0 : _g.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant FB Pixel: ${id}`);
                     initFacebookPixel(id);
                 });

@@ -439,16 +439,16 @@ export function DineoutTracking({ companyIdentifier, platform, userId }: Dineout
             // Restaurant-specific tracking (events also go to restaurant's accounts)
             // Only if companyIdentifier is provided
             // ---------------------------------------------------------------
-            if (companyIdentifier) {
-                config.gaTrackingId?.split(',').map(id => id.trim()).forEach(id => {
+            if (companyIdentifier || config.companyId) {
+                config.companyGATrackingId?.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GA4: ${id}`);
                     initGA4(id);
                 });
-                config.gTagId?.split(',').map(id => id.trim()).forEach(id => {
+                config.companyGTagId?.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant GTM: ${id}`);
                     initGTM(id);
                 });
-                config.fbPixelId?.split(',').map(id => id.trim()).forEach(id => {
+                config.companyFbPixelId?.split(',').map(id => id.trim()).forEach(id => {
                     trackLog(`Initializing Restaurant FB Pixel: ${id}`);
                     initFacebookPixel(id);
                 });
