@@ -139,31 +139,35 @@ declare global {
  * Internal function to send event to all platforms (or queue if not initialized)
  */
 function internalTrack(event: string, properties?: Record<string, any>): void {
-    // Handle Custom events - use eventName as the actual event name
-    let actualEvent = event;
-    let actualProperties = properties;
-    
-    if (event === 'Custom' && properties?.eventName) {
-        actualEvent = properties.eventName;
-        // Remove eventName from properties sent to platforms
-        const { eventName, ...rest } = properties;
-        actualProperties = rest;
+    try {
+        // Handle Custom events - use eventName as the actual event name
+        let actualEvent = event;
+        let actualProperties = properties;
+
+        if (event === 'Custom' && properties?.eventName) {
+            actualEvent = properties.eventName;
+            // Remove eventName from properties sent to platforms
+            const { eventName, ...rest } = properties;
+            actualProperties = rest;
+        }
+
+        trackLog(`track: ${actualEvent}`);
+
+        if (!isTrackingInitialized) {
+            // Queue the event for later
+            trackLog(`Queueing event (tracking not initialized): ${actualEvent}`);
+            eventQueue.push({
+                event: actualEvent,
+                properties: actualProperties,
+                timestamp: Date.now(),
+            });
+            return;
+        }
+
+        sendEventToAllPlatforms(actualEvent, actualProperties);
+    } catch (e) {
+        console.error("Failed to track event:", event, properties)
     }
-    
-    trackLog(`track: ${actualEvent}`);
-    
-    if (!isTrackingInitialized) {
-        // Queue the event for later
-        trackLog(`Queueing event (tracking not initialized): ${actualEvent}`);
-        eventQueue.push({
-            event: actualEvent,
-            properties: actualProperties,
-            timestamp: Date.now(),
-        });
-        return;
-    }
-    
-    sendEventToAllPlatforms(actualEvent, actualProperties);
 }
 
 // ============================================================================
