@@ -11,7 +11,7 @@ export declare function initMixpanel({ token, companyId, platform, userId }: Ini
 /**
  * Send an event directly to Mixpanel with the descriptive event name
  */
-export declare function trackToMixpanel(eventName: string, properties?: Record<string, any>): void;
+export declare function trackToMixpanel(eventName: string, properties?: Record<string, any>): boolean;
 /**
  * @deprecated Use dineoutTrack instead
  * Track a booking funnel event (Mixpanel-only).
@@ -22,7 +22,7 @@ export declare function trackBookingEvent<T extends TrackableEvent['event']>(eve
 /**
  * Identify a user in Mixpanel.
  * Call this after the user enters their contact info or logs in.
- * @param userId - Unique identifier for the user (e.g., phone, email, or user ID)
+ * @param userId - Stable internal identifier for the user. Do not use contact details.
  */
 export declare function identifyUser(userId: string): void;
 /**

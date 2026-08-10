@@ -18,7 +18,10 @@ export function initMixpanel({ token, companyId, platform, userId }) {
         });
         if (userId) {
             mixpanel.identify(userId);
+            trackLog('Mixpanel identified user');
         }
+        currentPlatform = platform;
+        currentCompanyId = companyId;
         return;
     }
     mixpanel.init(token, {
@@ -41,7 +44,7 @@ export function initMixpanel({ token, companyId, platform, userId }) {
     // Identify user if provided
     if (userId) {
         mixpanel.identify(userId);
-        trackLog(`Mixpanel identified user: ${userId}`);
+        trackLog('Mixpanel identified user');
     }
     mixpanelInitialized = true;
     trackLog(`Added Mixpanel with token: ${token.substring(0, 8)}... companyId: ${companyId}, platform: ${platform}`);
@@ -54,10 +57,11 @@ export function initMixpanel({ token, companyId, platform, userId }) {
  */
 export function trackToMixpanel(eventName, properties) {
     if (!mixpanelInitialized) {
-        return;
+        return false;
     }
     trackLog(`Sending to Mixpanel: ${eventName}`);
     mixpanel.track(eventName, properties !== null && properties !== void 0 ? properties : {});
+    return true;
 }
 // ============================================================================
 // EXPORTED FUNCTIONS
@@ -80,15 +84,15 @@ export function trackBookingEvent(event, ...args) {
 /**
  * Identify a user in Mixpanel.
  * Call this after the user enters their contact info or logs in.
- * @param userId - Unique identifier for the user (e.g., phone, email, or user ID)
+ * @param userId - Stable internal identifier for the user. Do not use contact details.
  */
 export function identifyUser(userId) {
     if (!mixpanelInitialized) {
-        trackLog(`Mixpanel not initialized, skipping identify: ${userId}`);
+        trackLog('Mixpanel not initialized, skipping identify');
         return;
     }
     mixpanel.identify(userId);
-    trackLog(`Mixpanel identified user: ${userId}`);
+    trackLog('Mixpanel identified user');
 }
 /**
  * Track a custom Mixpanel event (for creating other funnels beyond checkout).

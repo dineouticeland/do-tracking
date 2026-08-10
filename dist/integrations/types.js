@@ -4,7 +4,7 @@
 export const verbose = true;
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.5.9';
+export const currentVersion = '2.0.0';
 export const trackLog = (info) => {
     if (verbose) {
         console.info(`[DoTracking ${currentVersion}]`, info);
@@ -44,22 +44,23 @@ export const EVENT_MAP = {
     // Dineout Reservation Flow
     // -------------------------------------------------------------------------
     // Phase 1: Reservation selection (dineout.is)
-    'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Flow Started': { ga4: 'reservation_flow_started', fb: 'ReservationFlowStarted', fbCustom: true },
     'Reservation Step Viewed': { ga4: 'reservation_step_viewed', fb: 'ReservationStepViewed', fbCustom: true },
     'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
     'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
-    'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Reservation Time Selected': { ga4: 'reservation_time_selected', fb: 'ReservationTimeSelected', fbCustom: true },
     'Reservation Redirected To Checkout': { ga4: 'reservation_redirected', fb: 'ReservationRedirected', fbCustom: true },
     // Phase 2: Checkout (booking.dineout.is)
-    'Reservation Checkout Loaded': { ga4: 'view_cart', fb: 'ViewContent', fbCustom: false },
+    'Reservation Checkout Loaded': { ga4: 'reservation_checkout_loaded', fb: 'ReservationCheckoutLoaded', fbCustom: true },
     'Reservation Hold Started': { ga4: 'reservation_hold_started', fb: 'ReservationHoldStarted', fbCustom: true },
-    'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
+    'Customer Details Submitted': { ga4: 'reservation_customer_details_submitted', fb: 'ReservationCustomerDetailsSubmitted', fbCustom: true },
     'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
-    'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Reservation Payment Started': { ga4: 'reservation_payment_started', fb: 'ReservationPaymentStarted', fbCustom: true },
     'Reservation Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Reservation Payment Redirect': { ga4: 'payment_redirect', fb: 'PaymentRedirect', fbCustom: true },
     'Reservation Verification Needed': { ga4: 'verification_needed', fb: 'VerificationNeeded', fbCustom: true },
-    'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    'Reservation Completed': { ga4: 'generate_lead', fb: 'Lead', fbCustom: false },
+    'Reservation Deposit Paid': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
     "Reservation Failed": {
         ga4: "reservation_failed",
@@ -86,15 +87,51 @@ export const EVENT_MAP = {
     'Reservation Search': { ga4: 'search', fb: 'Search', fbCustom: false },
     'Reservation Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
-    'Quick Book Clicked': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Quick Book Clicked': { ga4: 'quick_book_clicked', fb: 'QuickBookClicked', fbCustom: true },
+    // -------------------------------------------------------------------------
+    // Dineout Takeaway Ecommerce
+    // -------------------------------------------------------------------------
+    'Takeaway Menu Viewed': { ga4: 'view_item_list', fb: 'ViewMenu', fbCustom: true },
+    'Takeaway Item Selected': { ga4: 'select_item', fb: null, fbCustom: true },
+    'Takeaway Item Viewed': { ga4: 'view_item', fb: 'ViewContent', fbCustom: false },
+    'Takeaway Item Added': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Takeaway Item Removed': { ga4: 'remove_from_cart', fb: 'RemoveFromCart', fbCustom: true },
+    'Takeaway Cart Viewed': { ga4: 'view_cart', fb: 'ViewCart', fbCustom: true },
+    'Takeaway Promo Applied': { ga4: 'takeaway_promo_applied', fb: 'TakeawayPromoApplied', fbCustom: true },
+    'Takeaway Promo Rejected': { ga4: 'takeaway_promo_rejected', fb: 'TakeawayPromoRejected', fbCustom: true },
+    'Takeaway Gift Card Applied': { ga4: 'takeaway_gift_card_applied', fb: 'TakeawayGiftCardApplied', fbCustom: true },
+    'Takeaway Gift Card Rejected': { ga4: 'takeaway_gift_card_rejected', fb: 'TakeawayGiftCardRejected', fbCustom: true },
+    'Takeaway Checkout Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Takeaway Payment Submitted': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Takeaway Payment Succeeded': { ga4: 'takeaway_payment_succeeded', fb: 'TakeawayPaymentSucceeded', fbCustom: true },
+    'Takeaway Payment Failed': { ga4: 'takeaway_payment_failed', fb: 'TakeawayPaymentFailed', fbCustom: true },
+    'Takeaway Order Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     // -------------------------------------------------------------------------
     // Generic
     // -------------------------------------------------------------------------
     'Custom': { ga4: 'custom_event', fb: 'Custom', fbCustom: true },
 };
+const LEGACY_EVENT_MAP = {
+    AddPaymentInfo: { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    AddToCart: { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    AddToWishlist: { ga4: 'add_to_wishlist', fb: 'AddToWishlist', fbCustom: false },
+    CompleteRegistration: { ga4: 'sign_up', fb: 'CompleteRegistration', fbCustom: false },
+    Contact: { ga4: 'contact', fb: 'Contact', fbCustom: false },
+    CustomizeProduct: { ga4: 'select_item', fb: 'CustomizeProduct', fbCustom: false },
+    Donate: { ga4: 'donate', fb: 'Donate', fbCustom: false },
+    FindLocation: { ga4: 'view_location', fb: 'FindLocation', fbCustom: false },
+    InitiateCheckout: { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    Lead: { ga4: 'generate_lead', fb: 'Lead', fbCustom: false },
+    Purchase: { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    Search: { ga4: 'search', fb: 'Search', fbCustom: false },
+    StartTrial: { ga4: 'start_trial', fb: 'StartTrial', fbCustom: false },
+    SubmitApplication: { ga4: 'submit_application', fb: 'SubmitApplication', fbCustom: false },
+    Subscribe: { ga4: 'subscribe', fb: 'Subscribe', fbCustom: false },
+    ViewContent: { ga4: 'view_item', fb: 'ViewContent', fbCustom: false },
+};
 export function mapEventName(event) {
-    var _a;
-    return (_a = EVENT_MAP[event]) !== null && _a !== void 0 ? _a : { ga4: event.toLowerCase().replace(/ /g, '_'), fb: event.replace(/ /g, ''), fbCustom: true };
+    var _a, _b;
+    return (_b = (_a = EVENT_MAP[event]) !== null && _a !== void 0 ? _a : LEGACY_EVENT_MAP[event]) !== null && _b !== void 0 ? _b : { ga4: event.toLowerCase().replace(/ /g, '_'), fb: event.replace(/ /g, ''), fbCustom: true };
 }
 // ============================================================================
 // SHARED STATE

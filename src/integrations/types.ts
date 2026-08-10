@@ -6,7 +6,7 @@ export const verbose = true;
 
 // Version is hardcoded to avoid JSON import issues in ESM
 // Update this when releasing a new version
-export const currentVersion = '1.5.9';
+export const currentVersion = '2.0.0';
 
 export const trackLog = (info: string) => {
     if (verbose) {
@@ -102,7 +102,8 @@ export type DineoutReservationEvent =
     | { event: 'Reservation Payment Failed'; payload: { provider?: string; error_code?: string; card_provider?: string } }
     | { event: 'Reservation Payment Redirect'; payload: { provider?: string; redirect_type: '3ds' | 'other'; amount?: number; currency?: string } }
     | { event: 'Reservation Verification Needed'; payload: { verification_type: 'email' | 'phone' | 'other'; reservation_id?: string } }
-    | { event: 'Reservation Completed'; payload: { reservation_id: string; amount_paid?: number; currency?: string; payment_required: boolean } }
+    | { event: 'Reservation Completed'; payload: { restaurant_id: string; restaurant_name?: string; reservation_id: string; payment_required: boolean } }
+    | { event: 'Reservation Deposit Paid'; payload: { restaurant_id: string; restaurant_name?: string; reservation_id: string; payment_transaction_id: string; value: number; currency: string } }
     | { event: 'Reservation Failed'; payload: { reservation_id?: string; type?: string; reason?: string } }
     | { event: 'Reservation Hold Expired' }
     // Custom event - for any untyped/ad-hoc tracking
@@ -156,10 +157,127 @@ export type DineoutDiscoveryEventMap = {
 };
 
 // ============================================================================
+// DINEOUT TAKEAWAY ECOMMERCE EVENTS (takeaway.dineout.is)
+// ============================================================================
+
+/**
+ * A single takeaway line item in GA4-compatible naming.
+ * `price` and `discount` are per-unit amounts in major currency units.
+ */
+export type TakeawayItem = {
+    item_id: string;
+    item_name: string;
+    price: number;
+    quantity: number;
+    item_category?: string;
+    item_variant?: string;
+    item_list_id?: string;
+    item_list_name?: string;
+    discount?: number;
+};
+
+export type TakeawayFulfillmentType = 'pickup' | 'delivery';
+
+export type TakeawayPaymentFailureCode =
+    | 'declined'
+    | 'cancelled'
+    | 'timeout'
+    | 'provider_error'
+    | 'unknown';
+
+export type TakeawayRejectionReasonCode =
+    | 'invalid'
+    | 'expired'
+    | 'not_found'
+    | 'not_applicable'
+    | 'minimum_not_met'
+    | 'already_redeemed'
+    | 'usage_limit_reached'
+    | 'insufficient_balance'
+    | 'disabled'
+    | 'provider_error'
+    | 'unknown';
+
+/**
+ * The cart snapshot shared by takeaway ecommerce events.
+ * Currency must be an uppercase three-letter ISO-4217 code at runtime.
+ */
+export type TakeawayCommercePayload = {
+    restaurant_id: string;
+    restaurant_name?: string;
+    cart_id?: string;
+    currency: string;
+    fulfillment_type: TakeawayFulfillmentType;
+    items: TakeawayItem[];
+    value: number;
+    coupon?: string;
+    tax?: number;
+    shipping?: number;
+};
+
+export type TakeawayPromoAppliedPayload = TakeawayCommercePayload & {
+    coupon: string;
+};
+
+/** An attempted promo code must not be included in a rejection event. */
+export type TakeawayPromoRejectedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    reason_code?: TakeawayRejectionReasonCode;
+};
+
+/** A redeemed gift-card code must never be included in tracking. */
+export type TakeawayGiftCardAppliedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    gift_card_value?: number;
+};
+
+export type TakeawayGiftCardRejectedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    reason_code?: TakeawayRejectionReasonCode;
+};
+
+export type TakeawayPaymentSubmittedPayload = TakeawayCommercePayload & {
+    payment_type?: string;
+};
+
+export type TakeawayPaymentSucceededPayload = TakeawayCommercePayload & {
+    order_id?: string | number;
+    payment_transaction_id?: string;
+};
+
+export type TakeawayPaymentFailedPayload = TakeawayCommercePayload & {
+    failure_code: TakeawayPaymentFailureCode;
+};
+
+export type TakeawayOrderCompletedPayload = TakeawayCommercePayload & {
+    /** Stable backend order identifier. Do not use a route/confirmation GUID. */
+    order_id: string | number;
+};
+
+export type DineoutTakeawayEvent =
+    | { event: 'Takeaway Menu Viewed'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Item Selected'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Item Viewed'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Item Added'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Item Removed'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Cart Viewed'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Promo Applied'; payload: TakeawayPromoAppliedPayload }
+    | { event: 'Takeaway Promo Rejected'; payload: TakeawayPromoRejectedPayload }
+    | { event: 'Takeaway Gift Card Applied'; payload: TakeawayGiftCardAppliedPayload }
+    | { event: 'Takeaway Gift Card Rejected'; payload: TakeawayGiftCardRejectedPayload }
+    | { event: 'Takeaway Checkout Started'; payload: TakeawayCommercePayload }
+    | { event: 'Takeaway Payment Submitted'; payload: TakeawayPaymentSubmittedPayload }
+    | { event: 'Takeaway Payment Succeeded'; payload: TakeawayPaymentSucceededPayload }
+    | { event: 'Takeaway Payment Failed'; payload: TakeawayPaymentFailedPayload }
+    | { event: 'Takeaway Order Completed'; payload: TakeawayOrderCompletedPayload }
+    | { event: 'Custom'; payload: { eventName: string; [key: string]: any } };
+
+export type DineoutTakeawayEventMap = {
+    [T in DineoutTakeawayEvent as T['event']]: T extends { payload: infer P } ? P : undefined;
+};
+
+// ============================================================================
 // COMBINED TRACKABLE EVENT (union of all event types)
 // ============================================================================
 
-export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | DineoutDiscoveryEvent | BaseTrackEvent;
+export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | DineoutDiscoveryEvent | DineoutTakeawayEvent | BaseTrackEvent;
 
 // Extract payload type for any event
 export type TrackableEventMap = {
@@ -172,7 +290,7 @@ export type TrackableEventMap = {
 
 export type EventMapping = {
     ga4: string;
-    fb: string;
+    fb: string | null;
     fbCustom: boolean;  // true = use trackCustom, false = use track
 };
 
@@ -202,22 +320,23 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     // Dineout Reservation Flow
     // -------------------------------------------------------------------------
     // Phase 1: Reservation selection (dineout.is)
-    'Reservation Flow Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Reservation Flow Started': { ga4: 'reservation_flow_started', fb: 'ReservationFlowStarted', fbCustom: true },
     'Reservation Step Viewed': { ga4: 'reservation_step_viewed', fb: 'ReservationStepViewed', fbCustom: true },
     'Reservation Date Selected': { ga4: 'reservation_date_selected', fb: 'ReservationDateSelected', fbCustom: true },
     'Reservation Guests Selected': { ga4: 'reservation_guests_selected', fb: 'ReservationGuestsSelected', fbCustom: true },
-    'Reservation Time Selected': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Reservation Time Selected': { ga4: 'reservation_time_selected', fb: 'ReservationTimeSelected', fbCustom: true },
     'Reservation Redirected To Checkout': { ga4: 'reservation_redirected', fb: 'ReservationRedirected', fbCustom: true },
     // Phase 2: Checkout (booking.dineout.is)
-    'Reservation Checkout Loaded': { ga4: 'view_cart', fb: 'ViewContent', fbCustom: false },
+    'Reservation Checkout Loaded': { ga4: 'reservation_checkout_loaded', fb: 'ReservationCheckoutLoaded', fbCustom: true },
     'Reservation Hold Started': { ga4: 'reservation_hold_started', fb: 'ReservationHoldStarted', fbCustom: true },
-    'Customer Details Submitted': { ga4: 'add_shipping_info', fb: 'CustomerDetailsSubmitted', fbCustom: true },
+    'Customer Details Submitted': { ga4: 'reservation_customer_details_submitted', fb: 'ReservationCustomerDetailsSubmitted', fbCustom: true },
     'Payment Required Shown': { ga4: 'payment_required_shown', fb: 'PaymentRequiredShown', fbCustom: true },
-    'Reservation Payment Started': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Reservation Payment Started': { ga4: 'reservation_payment_started', fb: 'ReservationPaymentStarted', fbCustom: true },
     'Reservation Payment Failed': { ga4: 'payment_failed', fb: 'PaymentFailed', fbCustom: true },
     'Reservation Payment Redirect': { ga4: 'payment_redirect', fb: 'PaymentRedirect', fbCustom: true },
     'Reservation Verification Needed': { ga4: 'verification_needed', fb: 'VerificationNeeded', fbCustom: true },
-    'Reservation Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    'Reservation Completed': { ga4: 'generate_lead', fb: 'Lead', fbCustom: false },
+    'Reservation Deposit Paid': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     'Reservation Hold Expired': { ga4: 'reservation_hold_expired', fb: 'ReservationHoldExpired', fbCustom: true },
     "Reservation Failed": {
         ga4: "reservation_failed",
@@ -244,7 +363,25 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
     'Reservation Search': { ga4: 'search', fb: 'Search', fbCustom: false },
     'Reservation Search Result Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
     'Table Restaurant Clicked': { ga4: 'select_item', fb: 'ViewContent', fbCustom: false },
-    'Quick Book Clicked': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Quick Book Clicked': { ga4: 'quick_book_clicked', fb: 'QuickBookClicked', fbCustom: true },
+    // -------------------------------------------------------------------------
+    // Dineout Takeaway Ecommerce
+    // -------------------------------------------------------------------------
+    'Takeaway Menu Viewed': { ga4: 'view_item_list', fb: 'ViewMenu', fbCustom: true },
+    'Takeaway Item Selected': { ga4: 'select_item', fb: null, fbCustom: true },
+    'Takeaway Item Viewed': { ga4: 'view_item', fb: 'ViewContent', fbCustom: false },
+    'Takeaway Item Added': { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    'Takeaway Item Removed': { ga4: 'remove_from_cart', fb: 'RemoveFromCart', fbCustom: true },
+    'Takeaway Cart Viewed': { ga4: 'view_cart', fb: 'ViewCart', fbCustom: true },
+    'Takeaway Promo Applied': { ga4: 'takeaway_promo_applied', fb: 'TakeawayPromoApplied', fbCustom: true },
+    'Takeaway Promo Rejected': { ga4: 'takeaway_promo_rejected', fb: 'TakeawayPromoRejected', fbCustom: true },
+    'Takeaway Gift Card Applied': { ga4: 'takeaway_gift_card_applied', fb: 'TakeawayGiftCardApplied', fbCustom: true },
+    'Takeaway Gift Card Rejected': { ga4: 'takeaway_gift_card_rejected', fb: 'TakeawayGiftCardRejected', fbCustom: true },
+    'Takeaway Checkout Started': { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    'Takeaway Payment Submitted': { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    'Takeaway Payment Succeeded': { ga4: 'takeaway_payment_succeeded', fb: 'TakeawayPaymentSucceeded', fbCustom: true },
+    'Takeaway Payment Failed': { ga4: 'takeaway_payment_failed', fb: 'TakeawayPaymentFailed', fbCustom: true },
+    'Takeaway Order Completed': { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
     // -------------------------------------------------------------------------
     // Generic
     // -------------------------------------------------------------------------
@@ -252,8 +389,29 @@ export const EVENT_MAP: Record<TrackableEvent['event'], EventMapping> = {
   
 };
 
-export function mapEventName(event: TrackableEvent['event']): EventMapping {
-    return EVENT_MAP[event] ?? { ga4: event.toLowerCase().replace(/ /g, '_'), fb: event.replace(/ /g, ''), fbCustom: true };
+const LEGACY_EVENT_MAP: Record<string, EventMapping> = {
+    AddPaymentInfo: { ga4: 'add_payment_info', fb: 'AddPaymentInfo', fbCustom: false },
+    AddToCart: { ga4: 'add_to_cart', fb: 'AddToCart', fbCustom: false },
+    AddToWishlist: { ga4: 'add_to_wishlist', fb: 'AddToWishlist', fbCustom: false },
+    CompleteRegistration: { ga4: 'sign_up', fb: 'CompleteRegistration', fbCustom: false },
+    Contact: { ga4: 'contact', fb: 'Contact', fbCustom: false },
+    CustomizeProduct: { ga4: 'select_item', fb: 'CustomizeProduct', fbCustom: false },
+    Donate: { ga4: 'donate', fb: 'Donate', fbCustom: false },
+    FindLocation: { ga4: 'view_location', fb: 'FindLocation', fbCustom: false },
+    InitiateCheckout: { ga4: 'begin_checkout', fb: 'InitiateCheckout', fbCustom: false },
+    Lead: { ga4: 'generate_lead', fb: 'Lead', fbCustom: false },
+    Purchase: { ga4: 'purchase', fb: 'Purchase', fbCustom: false },
+    Search: { ga4: 'search', fb: 'Search', fbCustom: false },
+    StartTrial: { ga4: 'start_trial', fb: 'StartTrial', fbCustom: false },
+    SubmitApplication: { ga4: 'submit_application', fb: 'SubmitApplication', fbCustom: false },
+    Subscribe: { ga4: 'subscribe', fb: 'Subscribe', fbCustom: false },
+    ViewContent: { ga4: 'view_item', fb: 'ViewContent', fbCustom: false },
+};
+
+export function mapEventName(event: TrackableEvent['event'] | string): EventMapping {
+    return (EVENT_MAP as Record<string, EventMapping>)[event]
+        ?? LEGACY_EVENT_MAP[event]
+        ?? { ga4: event.toLowerCase().replace(/ /g, '_'), fb: event.replace(/ /g, ''), fbCustom: true };
 }
 
 // ============================================================================
@@ -375,4 +533,3 @@ export function mapFacebookToGA4(event: TrackMethod['event'], data: any): { even
             return { event: (event as string).toLowerCase() };
     }
 }
-

@@ -1,78 +1,129 @@
 // ============================================================================
 // GOOGLE ANALYTICS (GA4) AND GTM INTEGRATION
 // ============================================================================
-import { trackLog, injectScriptOnce, addIntegration, mapFacebookToGA4 } from './types.js';
-// ============================================================================
-// STATE
-// ============================================================================
-let ga4Initialized = false;
-let gtmInitialized = false;
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-export function initGA4(measurementId) {
+import { injectScriptOnce, trackLog } from './types.js';
+const initializedGA4Ids = new Set();
+const activeGA4Ids = new Set();
+const initializedGTMTargets = new Map();
+const activeGTMIds = new Set();
+function normalizeIds(ids) {
+    return [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+}
+function ensureGoogleTag(measurementId) {
     window.dataLayer = window.dataLayer || [];
     if (!window.gtag) {
         window.gtag = function () {
             window.dataLayer.push(arguments);
         };
-        injectScriptOnce(`https://www.googletagmanager.com/gtag/js?id=${measurementId}`);
-        window.gtag("js", new Date());
+        window.gtag('js', new Date());
     }
-    window.gtag("config", measurementId);
-    ga4Initialized = true;
-    trackLog(`Added GA4 with MeasurementId: ${measurementId}`);
-    addIntegration((event, data) => {
-        trackLog(`Sending event to GA4 ${event}`);
-        const mapped = mapFacebookToGA4(event, data);
-        window.gtag("event", mapped.event, mapped.data);
-    });
+    const hasGoogleTag = Array.from(document.scripts).some((script) => script.src.includes('googletagmanager.com/gtag/js'));
+    if (!hasGoogleTag) {
+        injectScriptOnce(`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`);
+    }
+}
+export function initGA4(measurementId) {
+    const id = measurementId.trim();
+    if (!id)
+        return;
+    ensureGoogleTag(id);
+    activeGA4Ids.add(id);
+    if (initializedGA4Ids.has(id))
+        return;
+    window.gtag('config', id, { send_page_view: false });
+    initializedGA4Ids.add(id);
+    trackLog(`Added GA4 with MeasurementId: ${id}`);
+}
+function gtmLayerName(containerId) {
+    return `doTrackingGtm_${containerId.replace(/[^a-zA-Z0-9_]/g, '_')}`;
+}
+function getGTMLayer(containerId) {
+    const layerName = initializedGTMTargets.get(containerId);
+    if (!layerName)
+        return undefined;
+    const layer = window[layerName];
+    return Array.isArray(layer) ? layer : undefined;
 }
 export function initGTM(containerId) {
-    injectScriptOnce(`https://www.googletagmanager.com/gtm.js?id=${containerId}`);
-    window.dataLayer = window.dataLayer || [];
-    window.dataLayer.push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' });
-    gtmInitialized = true;
-    trackLog(`Added GTM with ContainerId: ${containerId}`);
-    addIntegration((event, data) => {
-        trackLog(`Sending event to GTM ${event}`);
-        const mapped = mapFacebookToGA4(event, data);
-        window.dataLayer.push({ event: mapped.event, data: mapped.data });
-    });
-}
-// ============================================================================
-// DIRECT TRACKING (for unified dineoutTrack)
-// ============================================================================
-/**
- * Send an event directly to GA4 with already-mapped event name
- */
-export function trackToGA4(eventName, properties) {
-    if (!ga4Initialized || !window.gtag) {
+    const id = containerId.trim();
+    if (!id)
         return;
-    }
+    activeGTMIds.add(id);
+    if (initializedGTMTargets.has(id))
+        return;
+    const layerName = gtmLayerName(id);
+    const existingLayer = window[layerName];
+    const layer = Array.isArray(existingLayer) ? existingLayer : [];
+    window[layerName] = layer;
+    layer.push({ 'gtm.start': Date.now(), event: 'gtm.js' });
+    injectScriptOnce(`https://www.googletagmanager.com/gtm.js?id=${encodeURIComponent(id)}&l=${encodeURIComponent(layerName)}`);
+    initializedGTMTargets.set(id, layerName);
+    trackLog(`Added GTM with ContainerId: ${id}`);
+}
+export function setActiveGA4MeasurementIds(ids) {
+    activeGA4Ids.clear();
+    normalizeIds(ids).forEach((id) => activeGA4Ids.add(id));
+}
+export function setActiveGTMContainerIds(ids) {
+    activeGTMIds.clear();
+    normalizeIds(ids).forEach((id) => activeGTMIds.add(id));
+}
+export function getActiveGA4MeasurementIds() {
+    return [...activeGA4Ids];
+}
+export function getActiveGTMContainerIds() {
+    return [...activeGTMIds];
+}
+export function trackToGA4(eventName, properties, targetIds = [...activeGA4Ids]) {
+    if (!window.gtag)
+        return [];
+    const destinations = normalizeIds(targetIds).filter((id) => activeGA4Ids.has(id) && initializedGA4Ids.has(id));
+    if (destinations.length === 0)
+        return [];
     trackLog(`Sending to GA4: ${eventName}`);
-    window.gtag("event", eventName, properties);
+    window.gtag('event', eventName, Object.assign(Object.assign({}, (properties !== null && properties !== void 0 ? properties : {})), { send_to: destinations }));
+    return destinations;
 }
-/**
- * Send an event directly to GTM with already-mapped event name
- */
-export function trackToGTM(eventName, properties) {
-    if (!gtmInitialized || !window.dataLayer) {
-        return;
-    }
-    trackLog(`Sending to GTM: ${eventName}`);
-    window.dataLayer.push(Object.assign({ event: eventName }, properties));
+export function trackToGTM(eventOrPayload, propertiesOrTargets, explicitTargetIds) {
+    const payload = typeof eventOrPayload === 'string'
+        ? Object.assign({ event: eventOrPayload }, (!Array.isArray(propertiesOrTargets) ? propertiesOrTargets : {})) : eventOrPayload;
+    const targetIds = typeof eventOrPayload === 'string'
+        ? (explicitTargetIds !== null && explicitTargetIds !== void 0 ? explicitTargetIds : (Array.isArray(propertiesOrTargets) ? propertiesOrTargets : [...activeGTMIds]))
+        : (Array.isArray(propertiesOrTargets) ? propertiesOrTargets : [...activeGTMIds]);
+    const delivered = [];
+    normalizeIds(targetIds).forEach((id) => {
+        var _a, _b;
+        if (!activeGTMIds.has(id))
+            return;
+        const layer = getGTMLayer(id);
+        if (!layer)
+            return;
+        try {
+            trackLog(`Sending to GTM ${id}: ${String((_a = payload.event) !== null && _a !== void 0 ? _a : 'event')}`);
+            if (Object.prototype.hasOwnProperty.call(payload, 'ecommerce')) {
+                layer.push({ ecommerce: null });
+            }
+            layer.push(payload);
+            delivered.push(id);
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            trackLog(`Could not send ${String((_b = payload.event) !== null && _b !== void 0 ? _b : 'event')} to GTM ${id}: ${message}`);
+        }
+    });
+    return delivered;
 }
-/**
- * Check if GA4 is initialized
- */
 export function isGA4Initialized() {
-    return ga4Initialized;
+    return initializedGA4Ids.size > 0;
 }
-/**
- * Check if GTM is initialized
- */
 export function isGTMInitialized() {
-    return gtmInitialized;
+    return initializedGTMTargets.size > 0;
+}
+/** Internal test helper; not re-exported from the package root. */
+export function __resetGoogleForTests() {
+    initializedGA4Ids.clear();
+    activeGA4Ids.clear();
+    initializedGTMTargets.clear();
+    activeGTMIds.clear();
 }
 //# sourceMappingURL=google.js.map

@@ -1,5 +1,5 @@
 export declare const verbose = true;
-export declare const currentVersion = "1.5.9";
+export declare const currentVersion = "2.0.0";
 export declare const trackLog: (info: string) => void;
 export type Platform = 'dineout' | 'sinna';
 export declare function detectPlatform(): Platform;
@@ -176,10 +176,20 @@ export type DineoutReservationEvent = {
 } | {
     event: 'Reservation Completed';
     payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
         reservation_id: string;
-        amount_paid?: number;
-        currency?: string;
         payment_required: boolean;
+    };
+} | {
+    event: 'Reservation Deposit Paid';
+    payload: {
+        restaurant_id: string;
+        restaurant_name?: string;
+        reservation_id: string;
+        payment_transaction_id: string;
+        value: number;
+        currency: string;
     };
 } | {
     event: 'Reservation Failed';
@@ -347,7 +357,126 @@ export type DineoutDiscoveryEventMap = {
         payload: infer P;
     } ? P : undefined;
 };
-export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | DineoutDiscoveryEvent | BaseTrackEvent;
+/**
+ * A single takeaway line item in GA4-compatible naming.
+ * `price` and `discount` are per-unit amounts in major currency units.
+ */
+export type TakeawayItem = {
+    item_id: string;
+    item_name: string;
+    price: number;
+    quantity: number;
+    item_category?: string;
+    item_variant?: string;
+    item_list_id?: string;
+    item_list_name?: string;
+    discount?: number;
+};
+export type TakeawayFulfillmentType = 'pickup' | 'delivery';
+export type TakeawayPaymentFailureCode = 'declined' | 'cancelled' | 'timeout' | 'provider_error' | 'unknown';
+export type TakeawayRejectionReasonCode = 'invalid' | 'expired' | 'not_found' | 'not_applicable' | 'minimum_not_met' | 'already_redeemed' | 'usage_limit_reached' | 'insufficient_balance' | 'disabled' | 'provider_error' | 'unknown';
+/**
+ * The cart snapshot shared by takeaway ecommerce events.
+ * Currency must be an uppercase three-letter ISO-4217 code at runtime.
+ */
+export type TakeawayCommercePayload = {
+    restaurant_id: string;
+    restaurant_name?: string;
+    cart_id?: string;
+    currency: string;
+    fulfillment_type: TakeawayFulfillmentType;
+    items: TakeawayItem[];
+    value: number;
+    coupon?: string;
+    tax?: number;
+    shipping?: number;
+};
+export type TakeawayPromoAppliedPayload = TakeawayCommercePayload & {
+    coupon: string;
+};
+/** An attempted promo code must not be included in a rejection event. */
+export type TakeawayPromoRejectedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    reason_code?: TakeawayRejectionReasonCode;
+};
+/** A redeemed gift-card code must never be included in tracking. */
+export type TakeawayGiftCardAppliedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    gift_card_value?: number;
+};
+export type TakeawayGiftCardRejectedPayload = Omit<TakeawayCommercePayload, 'coupon'> & {
+    reason_code?: TakeawayRejectionReasonCode;
+};
+export type TakeawayPaymentSubmittedPayload = TakeawayCommercePayload & {
+    payment_type?: string;
+};
+export type TakeawayPaymentSucceededPayload = TakeawayCommercePayload & {
+    order_id?: string | number;
+    payment_transaction_id?: string;
+};
+export type TakeawayPaymentFailedPayload = TakeawayCommercePayload & {
+    failure_code: TakeawayPaymentFailureCode;
+};
+export type TakeawayOrderCompletedPayload = TakeawayCommercePayload & {
+    /** Stable backend order identifier. Do not use a route/confirmation GUID. */
+    order_id: string | number;
+};
+export type DineoutTakeawayEvent = {
+    event: 'Takeaway Menu Viewed';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Item Selected';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Item Viewed';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Item Added';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Item Removed';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Cart Viewed';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Promo Applied';
+    payload: TakeawayPromoAppliedPayload;
+} | {
+    event: 'Takeaway Promo Rejected';
+    payload: TakeawayPromoRejectedPayload;
+} | {
+    event: 'Takeaway Gift Card Applied';
+    payload: TakeawayGiftCardAppliedPayload;
+} | {
+    event: 'Takeaway Gift Card Rejected';
+    payload: TakeawayGiftCardRejectedPayload;
+} | {
+    event: 'Takeaway Checkout Started';
+    payload: TakeawayCommercePayload;
+} | {
+    event: 'Takeaway Payment Submitted';
+    payload: TakeawayPaymentSubmittedPayload;
+} | {
+    event: 'Takeaway Payment Succeeded';
+    payload: TakeawayPaymentSucceededPayload;
+} | {
+    event: 'Takeaway Payment Failed';
+    payload: TakeawayPaymentFailedPayload;
+} | {
+    event: 'Takeaway Order Completed';
+    payload: TakeawayOrderCompletedPayload;
+} | {
+    event: 'Custom';
+    payload: {
+        eventName: string;
+        [key: string]: any;
+    };
+};
+export type DineoutTakeawayEventMap = {
+    [T in DineoutTakeawayEvent as T['event']]: T extends {
+        payload: infer P;
+    } ? P : undefined;
+};
+export type TrackableEvent = SinnaBookingEvent | DineoutReservationEvent | DineoutDiscoveryEvent | DineoutTakeawayEvent | BaseTrackEvent;
 export type TrackableEventMap = {
     [T in TrackableEvent as T['event']]: T extends {
         payload: infer P;
@@ -355,11 +484,11 @@ export type TrackableEventMap = {
 };
 export type EventMapping = {
     ga4: string;
-    fb: string;
+    fb: string | null;
     fbCustom: boolean;
 };
 export declare const EVENT_MAP: Record<TrackableEvent['event'], EventMapping>;
-export declare function mapEventName(event: TrackableEvent['event']): EventMapping;
+export declare function mapEventName(event: TrackableEvent['event'] | string): EventMapping;
 /** @deprecated Use TrackableEvent instead */
 export type TrackMethod = {
     event: 'AddPaymentInfo';

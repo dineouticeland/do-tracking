@@ -1,15 +1,13 @@
 // ============================================================================
 // FACEBOOK PIXEL INTEGRATION
 // ============================================================================
-import { trackLog, injectScriptOnce, addIntegration } from './types.js';
-// ============================================================================
-// STATE
-// ============================================================================
-let fbPixelInitialized = false;
-// ============================================================================
-// INITIALIZATION
-// ============================================================================
-export function initFacebookPixel(pixelId) {
+import { injectScriptOnce, trackLog } from './types.js';
+const initializedPixelIds = new Set();
+const activePixelIds = new Set();
+function normalizeIds(ids) {
+    return [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
+}
+function ensurePixelRuntime() {
     if (!window.fbq || !window.fbq.loaded) {
         const fbq = function () {
             if (fbq.callMethod) {
@@ -19,52 +17,67 @@ export function initFacebookPixel(pixelId) {
                 (fbq.queue = fbq.queue || []).push(arguments);
             }
         };
-        fbq.version = "2.0";
+        fbq.version = '2.0';
         fbq.loaded = true;
         fbq.queue = [];
         window.fbq = fbq;
-        injectScriptOnce("https://connect.facebook.net/en_US/fbevents.js");
     }
-    window.fbq("init", pixelId);
-    fbPixelInitialized = true;
-    trackLog(`Added Facebook Pixel with Id: ${pixelId}`);
-    window.fbq("track", "PageView");
-    addIntegration((event, data) => {
-        trackLog(`Sending event to Pixel ${event}`);
-        if (event === 'Custom') {
-            window.fbq("trackCustom", event, data);
+    const hasPixelRuntime = Array.from(document.scripts).some((script) => script.src.includes('connect.facebook.net') && script.src.includes('fbevents.js'));
+    if (!hasPixelRuntime) {
+        injectScriptOnce('https://connect.facebook.net/en_US/fbevents.js');
+    }
+}
+export function initFacebookPixel(pixelId) {
+    const id = pixelId.trim();
+    if (!id)
+        return;
+    ensurePixelRuntime();
+    activePixelIds.add(id);
+    if (initializedPixelIds.has(id))
+        return;
+    window.fbq('init', id);
+    initializedPixelIds.add(id);
+    trackLog(`Added Facebook Pixel with Id: ${id}`);
+}
+export function setActiveFacebookPixelIds(ids) {
+    activePixelIds.clear();
+    normalizeIds(ids).forEach((id) => activePixelIds.add(id));
+}
+export function getActiveFacebookPixelIds() {
+    return [...activePixelIds];
+}
+export function trackToFBPixel(eventName, isCustom, properties, eventID, targetIds = [...activePixelIds]) {
+    if (!window.fbq)
+        return [];
+    const method = isCustom ? 'trackSingleCustom' : 'trackSingle';
+    const options = eventID ? { eventID } : undefined;
+    const delivered = [];
+    normalizeIds(targetIds).forEach((id) => {
+        if (!activePixelIds.has(id) || !initializedPixelIds.has(id))
+            return;
+        try {
+            trackLog(`Sending ${isCustom ? 'custom ' : ''}event to Pixel ${id}: ${eventName}`);
+            if (options) {
+                window.fbq(method, id, eventName, properties, options);
+            }
+            else {
+                window.fbq(method, id, eventName, properties);
+            }
+            delivered.push(id);
         }
-        else {
-            window.fbq('track', event, data);
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            trackLog(`Could not send ${eventName} to Pixel ${id}: ${message}`);
         }
     });
+    return delivered;
 }
-// ============================================================================
-// DIRECT TRACKING (for unified dineoutTrack)
-// ============================================================================
-/**
- * Send an event directly to Facebook Pixel with already-mapped event name
- * @param eventName - The FB event name (e.g., 'Purchase', 'AddToCart')
- * @param isCustom - If true, uses trackCustom; if false, uses track
- * @param properties - Event properties
- */
-export function trackToFBPixel(eventName, isCustom, properties) {
-    if (!fbPixelInitialized || !window.fbq) {
-        return;
-    }
-    if (isCustom) {
-        trackLog(`Sending custom event to FB Pixel: ${eventName}`);
-        window.fbq("trackCustom", eventName, properties);
-    }
-    else {
-        trackLog(`Sending standard event to FB Pixel: ${eventName}`);
-        window.fbq("track", eventName, properties);
-    }
-}
-/**
- * Check if Facebook Pixel is initialized
- */
 export function isFBPixelInitialized() {
-    return fbPixelInitialized;
+    return initializedPixelIds.size > 0;
+}
+/** Internal test helper; not re-exported from the package root. */
+export function __resetFacebookForTests() {
+    initializedPixelIds.clear();
+    activePixelIds.clear();
 }
 //# sourceMappingURL=facebook.js.map

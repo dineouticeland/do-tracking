@@ -37,7 +37,10 @@ export function initMixpanel({ token, companyId, platform, userId }: InitMixpane
         });
         if (userId) {
             mixpanel.identify(userId);
+            trackLog('Mixpanel identified user');
         }
+        currentPlatform = platform;
+        currentCompanyId = companyId;
         return;
     }
 
@@ -65,7 +68,7 @@ export function initMixpanel({ token, companyId, platform, userId }: InitMixpane
     // Identify user if provided
     if (userId) {
         mixpanel.identify(userId);
-        trackLog(`Mixpanel identified user: ${userId}`);
+        trackLog('Mixpanel identified user');
     }
 
     mixpanelInitialized = true;
@@ -79,12 +82,13 @@ export function initMixpanel({ token, companyId, platform, userId }: InitMixpane
 /**
  * Send an event directly to Mixpanel with the descriptive event name
  */
-export function trackToMixpanel(eventName: string, properties?: Record<string, any>): void {
+export function trackToMixpanel(eventName: string, properties?: Record<string, any>): boolean {
     if (!mixpanelInitialized) {
-        return;
+        return false;
     }
     trackLog(`Sending to Mixpanel: ${eventName}`);
     mixpanel.track(eventName, properties ?? {});
+    return true;
 }
 
 // ============================================================================
@@ -114,16 +118,16 @@ export function trackBookingEvent<T extends TrackableEvent['event']>(
 /**
  * Identify a user in Mixpanel.
  * Call this after the user enters their contact info or logs in.
- * @param userId - Unique identifier for the user (e.g., phone, email, or user ID)
+ * @param userId - Stable internal identifier for the user. Do not use contact details.
  */
 export function identifyUser(userId: string): void {
     if (!mixpanelInitialized) {
-        trackLog(`Mixpanel not initialized, skipping identify: ${userId}`);
+        trackLog('Mixpanel not initialized, skipping identify');
         return;
     }
 
     mixpanel.identify(userId);
-    trackLog(`Mixpanel identified user: ${userId}`);
+    trackLog('Mixpanel identified user');
 }
 
 /**
@@ -175,4 +179,3 @@ export function getCurrentPlatform(): Platform {
 export function getCurrentCompanyId(): string | null {
     return currentCompanyId;
 }
-

@@ -2,7 +2,7 @@ declare global {
     interface Fbq {
         (...args: any[]): void;
         callMethod?: (...args: any[]) => void;
-        queue?: any[];
+        queue?: IArguments[];
         version?: string;
         loaded?: boolean;
     }
@@ -11,15 +11,10 @@ declare global {
     }
 }
 export declare function initFacebookPixel(pixelId: string): void;
-/**
- * Send an event directly to Facebook Pixel with already-mapped event name
- * @param eventName - The FB event name (e.g., 'Purchase', 'AddToCart')
- * @param isCustom - If true, uses trackCustom; if false, uses track
- * @param properties - Event properties
- */
-export declare function trackToFBPixel(eventName: string, isCustom: boolean, properties?: Record<string, any>): void;
-/**
- * Check if Facebook Pixel is initialized
- */
+export declare function setActiveFacebookPixelIds(ids: readonly string[]): void;
+export declare function getActiveFacebookPixelIds(): string[];
+export declare function trackToFBPixel(eventName: string, isCustom: boolean, properties?: Record<string, unknown>, eventID?: string, targetIds?: readonly string[]): string[];
 export declare function isFBPixelInitialized(): boolean;
+/** Internal test helper; not re-exported from the package root. */
+export declare function __resetFacebookForTests(): void;
 //# sourceMappingURL=facebook.d.ts.map

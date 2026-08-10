@@ -1,103 +1,62 @@
-import { Platform, TrackingEventFunction, TrackableEvent, TrackableEventMap, SinnaBookingEvent, SinnaBookingEventMap, DineoutReservationEvent, DineoutReservationEventMap, DineoutDiscoveryEvent, DineoutDiscoveryEventMap } from './integrations/index.js';
-export type { Platform, TrackableEvent, SinnaBookingEvent, DineoutReservationEvent, DineoutDiscoveryEvent, } from './integrations/index.js';
+import type { DineoutDiscoveryEvent, DineoutDiscoveryEventMap, DineoutReservationEvent, DineoutReservationEventMap, DineoutTakeawayEvent, DineoutTakeawayEventMap, Platform, SinnaBookingEvent, SinnaBookingEventMap, TrackableEvent, TrackableEventMap, TrackingEventFunction, TrackingProperties } from './integrations/index.js';
+export type { DineoutDiscoveryEvent, DineoutDiscoveryEventMap, DineoutReservationEvent, DineoutReservationEventMap, DineoutTakeawayEvent, DineoutTakeawayEventMap, Platform, SinnaBookingEvent, SinnaBookingEventMap, TakeawayCommercePayload, TakeawayFulfillmentType, TakeawayGiftCardAppliedPayload, TakeawayGiftCardRejectedPayload, TakeawayItem, TakeawayOrderCompletedPayload, TakeawayPaymentFailedPayload, TakeawayPaymentFailureCode, TakeawayPaymentSubmittedPayload, TakeawayPaymentSucceededPayload, TakeawayPromoAppliedPayload, TakeawayPromoRejectedPayload, TakeawayRejectionReasonCode, TrackableEvent, TrackableEventMap, } from './integrations/index.js';
+export type CompanyTrackingMode = 'auto' | 'direct' | 'gtm' | 'both';
 export type DineoutTrackingProps = {
+    /** If omitted, only platform-owned destinations are activated. */
     companyIdentifier?: string;
     platform?: Platform;
+    /** A stable internal identifier. Do not pass an email address or phone number. */
     userId?: string;
+    /**
+     * Optional company-delivery override. By default, every configured company
+     * destination is active: GA4/Meta are direct and GTM receives data-layer events.
+     */
+    companyTrackingMode?: CompanyTrackingMode;
 };
 type QueuedEvent = {
     event: string;
-    properties?: Record<string, any>;
+    properties?: TrackingProperties;
     timestamp: number;
+    configurationKey?: string;
+    configurationGeneration?: number;
 };
-/**
- * Check if tracking has been initialized
- */
+/** Check whether a configuration is active and events can be dispatched. */
 export declare function isInitialized(): boolean;
-/**
- * Get the current event queue (for debugging)
- */
+/** Return a copy of events waiting for the current configuration request. */
 export declare function getEventQueue(): QueuedEvent[];
 declare global {
     interface Window {
         trackSinna?: typeof trackSinna;
         trackDineout?: typeof trackDineout;
         trackDineoutDiscovery?: typeof trackDineoutDiscovery;
+        trackTakeaway?: typeof trackTakeaway;
         trackPageView?: typeof trackPageView;
-        /** @deprecated Use trackSinna or trackDineout instead */
+        /** @deprecated Use a domain-specific tracking function instead. */
         sendDineoutEvent?: TrackingEventFunction;
     }
 }
-/**
- * Track a Sinna service booking event across all platforms.
- * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
- *
- * @example
- * trackSinna('Booking Flow Started');
- * trackSinna('Service Selected', { serviceId: 'svc-1', serviceName: 'Haircut', price: 4500 });
- * trackSinna('Booking Completed', { bookingId: 'b-123', totalAmount: 4500, currency: 'ISK' });
- */
+/** Track a Sinna service-booking event. Sinna event semantics are unchanged in v2. */
 export declare function trackSinna<T extends SinnaBookingEvent['event']>(event: T, ...args: SinnaBookingEventMap[T] extends undefined ? [] : [properties: SinnaBookingEventMap[T]]): void;
-/**
- * Track a Dineout restaurant reservation checkout event across all platforms.
- * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
- *
- * @example
- * trackDineout('Reservation Checkout Loaded', { restaurant_id: 'rest-1', dateTime: '2026-01-15T19:00', guests: 4 });
- * trackDineout('Reservation Completed', { reservation_id: 'res-456', payment_required: false });
- */
+/** Track a Dineout reservation event, including Lead and deposit Purchase events. */
 export declare function trackDineout<T extends DineoutReservationEvent['event']>(event: T, ...args: DineoutReservationEventMap[T] extends undefined ? [] : [properties: DineoutReservationEventMap[T]]): void;
-/**
- * Track a Dineout discovery/navigation event across all platforms.
- * Use this for frontpage interactions, search, book-a-table, and reservation selection events.
- * If tracking is not yet initialized, the event will be queued and sent once initialization completes.
- *
- * @example
- * trackDineoutDiscovery('Restaurant Clicked', { restaurant_id: 'rest-1', source: 'frontpage' });
- * trackDineoutDiscovery('Search Opened');
- * trackDineoutDiscovery('Reservation Flow Started', { company_id: 'comp-1' });
- */
+/** Track a Dineout discovery or reservation-selection event. */
 export declare function trackDineoutDiscovery<T extends DineoutDiscoveryEvent['event']>(event: T, ...args: DineoutDiscoveryEventMap[T] extends undefined ? [] : [properties: DineoutDiscoveryEventMap[T]]): void;
-/**
- * Identify a user for tracking.
- * Call this after the user enters their contact info or logs in.
- * @param userId - Unique identifier for the user (e.g., phone, email, or user ID)
- */
-export declare function identifyUser(userId: string): void;
-/**
- * Reset tracking state (useful for logout).
- * Clears the current user identity and generates a new anonymous ID.
- */
-export declare function reset(): void;
-/**
- * Track a pageview across all platforms.
- * Call this on route changes in SPA applications (e.g., Next.js).
- *
- * @param url - The URL/path of the page (e.g., '/restaurants/pizza-place')
- * @param title - Optional page title
- *
- * @example
- * // In Next.js App Router
- * useEffect(() => {
- *   trackPageView(window.location.pathname);
- * }, [pathname]);
- *
- * @example
- * // In Next.js Pages Router
- * router.events.on('routeChangeComplete', (url) => {
- *   trackPageView(url);
- * });
- */
-export declare function trackPageView(url: string, title?: string): void;
-/**
- * @deprecated Use trackSinna or trackDineout instead
- * Generic tracking function that accepts any event type.
- */
+/** Track a validated takeaway menu, cart, checkout, payment, or order event. */
+export declare function trackTakeaway<T extends DineoutTakeawayEvent['event']>(event: T, ...args: DineoutTakeawayEventMap[T] extends undefined ? [] : [properties: DineoutTakeawayEventMap[T]]): void;
+/** @deprecated Prefer the domain-specific typed tracking functions. */
 export declare function dineoutTrack<T extends TrackableEvent['event']>(event: T, ...args: TrackableEventMap[T] extends undefined ? [] : [properties: TrackableEventMap[T]]): void;
 /**
- * @deprecated Use trackSinna or trackDineout instead
- * Sends an event to all the added integrations via this package.
+ * @deprecated Prefer trackTakeaway, trackDineout, trackDineoutDiscovery, or
+ * trackSinna. This compatibility API now enters the unified dispatcher once.
  */
 export declare const sendDineoutEvent: TrackingEventFunction;
-export declare function DineoutTracking({ companyIdentifier, platform, userId }: DineoutTrackingProps): null;
+/** Identify a user in Mixpanel with a stable, non-PII internal identifier. */
+export declare function identifyUser(userId: string): void;
+/** Reset Mixpanel identity state, for example after logout. */
+export declare function reset(): void;
+/** Track one manual page view per currently active destination. */
+export declare function trackPageView(url: string, title?: string): void;
+export declare function DineoutTracking({ companyIdentifier, platform, userId, companyTrackingMode, }: DineoutTrackingProps): null;
+/** Reset module-level orchestration state between jsdom test cases. */
+export declare function __resetTrackingForTests(): void;
 //# sourceMappingURL=DineoutTracking.d.ts.map

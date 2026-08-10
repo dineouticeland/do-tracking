@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { DineoutTracking, trackSinna, trackDineout, trackDineoutDiscovery, identifyUser, reset, sendDineoutEvent } from "../DineoutTracking.js";
+import {
+    DineoutTracking,
+    trackSinna,
+    trackDineout,
+    trackDineoutDiscovery,
+    trackTakeaway,
+    trackPageView,
+    identifyUser,
+    reset,
+    sendDineoutEvent,
+    type TakeawayItem,
+} from "../DineoutTracking.js";
 
 const TEST_USERS = [
     { id: null, name: 'Anonymous (No User)' },
@@ -8,10 +19,37 @@ const TEST_USERS = [
     { id: 'testtester-002', name: 'testtester' },
 ];
 
+const TAKEAWAY_ITEMS: TakeawayItem[] = [
+    {
+        item_id: 'burger-101',
+        item_name: 'Funky Burger',
+        item_category: 'Burgers',
+        item_variant: 'burger-101|patty:double|sauce:chili',
+        item_list_id: 'main-menu',
+        item_list_name: 'Main menu',
+        price: 3290,
+        quantity: 1,
+        discount: 500,
+    },
+];
+
+const TAKEAWAY_CONTEXT = {
+    restaurant_id: 'funkybhangra',
+    restaurant_name: 'Funky Bhangra',
+    cart_id: 'cart-4821',
+    currency: 'ISK',
+    fulfillment_type: 'pickup' as const,
+    items: TAKEAWAY_ITEMS,
+    value: 3290,
+};
+
 export default function TestApp() {
     const [companyIdentifier, setCompanyIdentifier] = useState('');
     const [initialised, setInitialised] = useState(false);
     const [currentUser, setCurrentUser] = useState<typeof TEST_USERS[0]>(TEST_USERS[0]);
+    const [companyTrackingMode, setCompanyTrackingMode] = useState<'auto' | 'direct' | 'gtm' | 'both'>('auto');
+    const [takeawayOrderNumber, setTakeawayOrderNumber] = useState(104582);
+    const takeawayOrderId = String(takeawayOrderNumber);
 
     const handleUserSelect = (user: typeof TEST_USERS[0]) => {
         if (user.id) {
@@ -36,6 +74,20 @@ export default function TestApp() {
                            setCompanyIdentifier(e.target.value);
                     }}
                 />
+                <select
+                    aria-label="Company tracking mode"
+                    value={companyTrackingMode}
+                    onChange={(event) => {
+                        setInitialised(false);
+                        setCompanyTrackingMode(event.target.value as 'auto' | 'direct' | 'gtm' | 'both');
+                    }}
+                    style={{ padding: 8, marginRight: 8 }}
+                >
+                    <option value="auto">Auto (all configured destinations)</option>
+                    <option value="direct">Direct company tags only</option>
+                    <option value="gtm">Company GTM only</option>
+                    <option value="both">Direct + GTM</option>
+                </select>
                 <button 
                     onClick={() => setInitialised(true)}
                     style={{ padding: '8px 16px' }}
@@ -46,7 +98,20 @@ export default function TestApp() {
 
                 {companyIdentifier && initialised && (
                     <>
-                    <DineoutTracking companyIdentifier={companyIdentifier} />
+                    <DineoutTracking
+                        companyIdentifier={companyIdentifier}
+                        companyTrackingMode={companyTrackingMode}
+                    />
+
+                    <section style={{ marginBottom: 30, padding: 16, background: '#f3e5f5', borderRadius: 8 }}>
+                        <h2 style={{ marginTop: 0 }}>Page view</h2>
+                        <p style={{ margin: '0 0 12px 0', color: '#666', fontSize: 14 }}>
+                            Sends one manual page view with the full browser URL.
+                        </p>
+                        <button onClick={() => trackPageView(window.location.href, document.title)}>
+                            Track current page
+                        </button>
+                    </section>
                     
                     {/* User Selection */}
                     <section style={{ marginBottom: 30, padding: 16, background: '#f5f5f5', borderRadius: 8 }}>
@@ -72,6 +137,106 @@ export default function TestApp() {
                                     {user.name}
                                 </button>
                             ))}
+                        </div>
+                    </section>
+
+                    {/* Takeaway Ecommerce Flow */}
+                    <section style={{ marginBottom: 30, padding: 16, background: '#e8f5e9', borderRadius: 8 }}>
+                        <h2 style={{ marginTop: 0 }}>🥡 Takeaway Ecommerce (trackTakeaway)</h2>
+                        <p style={{ margin: '0 0 12px 0', color: '#666', fontSize: 14 }}>
+                            <code>takeaway.dineout.is/funkybhangra/order</code> — menu, cart, checkout, and confirmation flow.
+                            Current test order: <strong>{takeawayOrderId}</strong>. Click completion twice to verify deduplication.
+                        </p>
+
+                        <h3 style={{ marginBottom: 8, color: '#666' }}>Menu and cart</h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                            <button onClick={() => trackTakeaway('Takeaway Menu Viewed', TAKEAWAY_CONTEXT)}>
+                                1. Menu Viewed
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Item Selected', TAKEAWAY_CONTEXT)}>
+                                2. Item Selected
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Item Viewed', TAKEAWAY_CONTEXT)}>
+                                3. Item Viewed
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Item Added', TAKEAWAY_CONTEXT)}>
+                                4. Item Added (+1 delta)
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Item Removed', TAKEAWAY_CONTEXT)}>
+                                5. Item Removed (-1 delta)
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Cart Viewed', TAKEAWAY_CONTEXT)}>
+                                6. Cart Viewed
+                            </button>
+                        </div>
+
+                        <h3 style={{ marginBottom: 8, color: '#666' }}>Promo and gift card responses</h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
+                            <button onClick={() => trackTakeaway('Takeaway Promo Applied', {
+                                ...TAKEAWAY_CONTEXT,
+                                coupon: 'SUMMER',
+                            })}>
+                                Promo Applied
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Promo Rejected', TAKEAWAY_CONTEXT)}>
+                                Promo Rejected (no attempted code)
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Gift Card Applied', {
+                                ...TAKEAWAY_CONTEXT,
+                                gift_card_value: 1000,
+                            })}>
+                                Gift Card Applied (no card code)
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Gift Card Rejected', TAKEAWAY_CONTEXT)}>
+                                Gift Card Rejected (no card code)
+                            </button>
+                        </div>
+
+                        <h3 style={{ marginBottom: 8, color: '#666' }}>Checkout and confirmation</h3>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            <button onClick={() => setTakeawayOrderNumber((current) => current + 1)}>
+                                Use a fresh test order ID
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Checkout Started', TAKEAWAY_CONTEXT)}>
+                                7. Checkout Started
+                            </button>
+                            <button onClick={() => trackTakeaway('Takeaway Payment Submitted', {
+                                ...TAKEAWAY_CONTEXT,
+                                payment_type: 'card',
+                            })}>
+                                8. Payment Submitted
+                            </button>
+                            <button
+                                onClick={() => trackTakeaway('Takeaway Payment Failed', {
+                                    ...TAKEAWAY_CONTEXT,
+                                    failure_code: 'declined',
+                                })}
+                                style={{ background: '#ffebee', borderColor: '#ef5350' }}
+                            >
+                                ❌ Payment Failed
+                            </button>
+                            <button
+                                onClick={() => trackTakeaway('Takeaway Payment Succeeded', {
+                                    ...TAKEAWAY_CONTEXT,
+                                    order_id: takeawayOrderId,
+                                    payment_transaction_id: `pay-${takeawayOrderId}`,
+                                })}
+                                style={{ background: '#e3f2fd', borderColor: '#42a5f5' }}
+                            >
+                                Payment Succeeded
+                            </button>
+                            <button
+                                onClick={() => trackTakeaway('Takeaway Order Completed', {
+                                    ...TAKEAWAY_CONTEXT,
+                                    order_id: takeawayOrderId,
+                                    tax: 783,
+                                    shipping: 0,
+                                    coupon: 'SUMMER',
+                                })}
+                                style={{ background: '#c8e6c9', borderColor: '#66bb6a' }}
+                            >
+                                ✅ 9. Order Completed
+                            </button>
                         </div>
                     </section>
 
@@ -234,14 +399,25 @@ export default function TestApp() {
                             </button>
                             <button 
                                 onClick={() => trackDineout('Reservation Completed', { 
+                                    restaurant_id: 'rest-123',
                                     reservation_id: 'res-456',
-                                    amount_paid: 2000,
-                                    currency: 'ISK',
                                     payment_required: true
                                 })}
                                 style={{ background: '#c8e6c9', borderColor: '#66bb6a' }}
                             >
                                 ✅ Reservation Completed
+                            </button>
+                            <button
+                                onClick={() => trackDineout('Reservation Deposit Paid', {
+                                    restaurant_id: 'rest-123',
+                                    reservation_id: 'res-456',
+                                    payment_transaction_id: 'deposit-pay-789',
+                                    value: 2000,
+                                    currency: 'ISK',
+                                })}
+                                style={{ background: '#c8e6c9', borderColor: '#43a047' }}
+                            >
+                                💳 Deposit Paid (Purchase)
                             </button>
                             <button 
                                 onClick={() => trackDineout('Reservation Hold Expired')}

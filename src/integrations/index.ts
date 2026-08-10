@@ -17,6 +17,22 @@ export type {
     // Dineout discovery events
     DineoutDiscoveryEvent,
     DineoutDiscoveryEventMap,
+    // Dineout takeaway ecommerce events
+    TakeawayItem,
+    TakeawayFulfillmentType,
+    TakeawayPaymentFailureCode,
+    TakeawayRejectionReasonCode,
+    TakeawayCommercePayload,
+    TakeawayPromoAppliedPayload,
+    TakeawayPromoRejectedPayload,
+    TakeawayGiftCardAppliedPayload,
+    TakeawayGiftCardRejectedPayload,
+    TakeawayPaymentSubmittedPayload,
+    TakeawayPaymentSucceededPayload,
+    TakeawayPaymentFailedPayload,
+    TakeawayOrderCompletedPayload,
+    DineoutTakeawayEvent,
+    DineoutTakeawayEventMap,
     // Combined event type
     TrackableEvent,
     TrackableEventMap,
@@ -26,6 +42,27 @@ export type {
     EventMap,
     TrackingEventFunction,
 } from './types.js';
+
+export type {
+    TrackingProperties,
+    GA4AdapterEvent,
+    GTMAdapterEvent,
+    MetaAdapterEvent,
+    MixpanelAdapterEvent,
+    ConversionDescriptor,
+    AdaptedTrackingEvent,
+} from './adapters.js';
+
+export {
+    TrackingValidationError,
+    validateEventPayload,
+    isTakeawayEvent,
+    toGA4Event,
+    toGTMEvent,
+    toMetaEvent,
+    toMixpanelEvent,
+    adaptEvent,
+} from './adapters.js';
 
 export {
     trackLog,
@@ -46,6 +83,8 @@ export {
 // Facebook Pixel
 export {
     initFacebookPixel,
+    setActiveFacebookPixelIds,
+    getActiveFacebookPixelIds,
     trackToFBPixel,
     isFBPixelInitialized,
 } from './facebook.js';
@@ -54,6 +93,10 @@ export {
 export {
     initGA4,
     initGTM,
+    setActiveGA4MeasurementIds,
+    setActiveGTMContainerIds,
+    getActiveGA4MeasurementIds,
+    getActiveGTMContainerIds,
     trackToGA4,
     trackToGTM,
     isGA4Initialized,

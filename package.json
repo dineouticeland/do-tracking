@@ -1,18 +1,20 @@
 {
   "name": "@dineouticeland/do-tracking",
-  "version": "1.6.4",
+  "version": "2.0.0",
   "description": "Multi-tenant tracking loader for Dineout/Sinna using GA4, GTM, FB Pixel, and Mixpanel",
   "license": "ISC",
   "author": "Adam The Tracking Wizard",
   "type": "module",
   "main": "dist/DineoutTracking.js",
   "types": "dist/DineoutTracking.d.ts",
-  "files": ["dist", "README.md", "LICENSE", "package.json"],
+  "files": ["dist", "README.md", "MIGRATION.md", "LICENSE", "package.json"],
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
   },
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepack": "pnpm run build",
     "release": "./release.sh",
     "publish": "npm publish"
@@ -32,9 +34,11 @@
     "@types/node": "^22.15.21",
     "@types/react": "^19.1.5",
     "@types/react-dom": "^19.1.5",
+    "jsdom": "^26.1.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "^3.2.4"
   }
 }
