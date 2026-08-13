@@ -17,7 +17,8 @@
     "test:watch": "vitest",
     "prepack": "pnpm run build",
     "release": "./release.sh",
-    "publish": "npm publish"
+    "publish": "npm publish",
+    "example": "pnpm exec vite src/example --host 127.0.0.1"
   },
   "peerDependencies": {
     "react": "^17 || ^18 || ^19"
