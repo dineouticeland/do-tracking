@@ -12,6 +12,13 @@ export type DineoutTrackingProps = {
      * destination is active: GA4/Meta are direct and GTM receives data-layer events.
      */
     companyTrackingMode?: CompanyTrackingMode;
+    /**
+     * When true, direct GA4 events and page views carry `debug_mode: true` so
+     * they appear in GA4 DebugView. Intended for local/QA diagnosis — leave it
+     * off (the default) in production. Only affects direct GA4 sends; GTM,
+     * Meta, and Mixpanel payloads are unchanged.
+     */
+    debug?: boolean;
 };
 type QueuedEvent = {
     event: string;
@@ -56,7 +63,7 @@ export declare function identifyUser(userId: string): void;
 export declare function reset(): void;
 /** Track one manual page view per currently active destination. */
 export declare function trackPageView(url: string, title?: string): void;
-export declare function DineoutTracking({ companyIdentifier, platform, userId, companyTrackingMode, }: DineoutTrackingProps): null;
+export declare function DineoutTracking({ companyIdentifier, platform, userId, companyTrackingMode, debug, }: DineoutTrackingProps): null;
 /** Reset module-level orchestration state between jsdom test cases. */
 export declare function __resetTrackingForTests(): void;
 //# sourceMappingURL=DineoutTracking.d.ts.map

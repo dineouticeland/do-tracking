@@ -87,6 +87,13 @@ export type DineoutTrackingProps = {
      * destination is active: GA4/Meta are direct and GTM receives data-layer events.
      */
     companyTrackingMode?: CompanyTrackingMode;
+    /**
+     * When true, direct GA4 events and page views carry `debug_mode: true` so
+     * they appear in GA4 DebugView. Intended for local/QA diagnosis — leave it
+     * off (the default) in production. Only affects direct GA4 sends; GTM,
+     * Meta, and Mixpanel payloads are unchanged.
+     */
+    debug?: boolean;
 };
 
 type QueuedEvent = {
@@ -127,6 +134,10 @@ let successfulConfigurationCount = 0;
 
 let mixpanelDeliveryEnabled = false;
 let mixpanelDestinationId: string | undefined;
+
+// When true, direct GA4 sends include `debug_mode: true` for GA4 DebugView.
+// Driven by the DineoutTracking `debug` prop; off in production by default.
+let debugMode = false;
 
 const cachedConversions = new Map<string, CachedConversion>();
 const pageViews: PageViewRecord[] = [];
@@ -268,7 +279,10 @@ function dispatchEvent(
             'ga4',
             getActiveGA4MeasurementIds(),
         );
-        const delivered = trackToGA4(adapted.ga4.eventName, adapted.ga4.params, targets);
+        const ga4Params = debugMode
+            ? { ...adapted.ga4.params, debug_mode: true }
+            : adapted.ga4.params;
+        const delivered = trackToGA4(adapted.ga4.eventName, ga4Params, targets);
         markDestinationsDelivered(logicalEventId, 'ga4', delivered);
     } catch (error) {
         reportDispatchError('GA4', event, error);
@@ -486,8 +500,9 @@ function deliverPageViewToActiveDestinations(pageView: PageViewRecord): void {
     const gaTargets = getActiveGA4MeasurementIds().filter(
         (id) => !hasPageViewBeenDelivered(pageView, `ga4:${id}`),
     );
+    const gaProperties = debugMode ? { ...properties, debug_mode: true } : properties;
     try {
-        for (const id of trackToGA4('page_view', properties, gaTargets)) {
+        for (const id of trackToGA4('page_view', gaProperties, gaTargets)) {
             markPageViewDelivered(pageView, `ga4:${id}`);
         }
     } catch (error) {
@@ -769,11 +784,14 @@ export function DineoutTracking({
     platform,
     userId,
     companyTrackingMode = 'auto',
+    debug = false,
 }: DineoutTrackingProps) {
     const resolvedPlatform = platform ?? detectPlatform();
     const configurationKey = `${resolvedPlatform}:${companyIdentifier ?? '__platform_only__'}`;
     const latestUserId = useRef(userId);
     latestUserId.current = userId;
+    // Kept current every render so a toggle takes effect on the next event.
+    debugMode = debug;
 
     useEffect(() => {
         exposeGlobalFunctions();
@@ -855,6 +873,7 @@ export function __resetTrackingForTests(): void {
     successfulConfigurationCount = 0;
     mixpanelDeliveryEnabled = false;
     mixpanelDestinationId = undefined;
+    debugMode = false;
     cachedConversions.clear();
     pageViews.splice(0, pageViews.length);
     deliveredPageViews.clear();

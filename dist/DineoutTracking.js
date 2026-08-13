@@ -28,6 +28,9 @@ let activeCompanyTrackingMode;
 let successfulConfigurationCount = 0;
 let mixpanelDeliveryEnabled = false;
 let mixpanelDestinationId;
+// When true, direct GA4 sends include `debug_mode: true` for GA4 DebugView.
+// Driven by the DineoutTracking `debug` prop; off in production by default.
+let debugMode = false;
 const cachedConversions = new Map();
 const pageViews = [];
 const deliveredPageViews = new Set();
@@ -139,7 +142,9 @@ function dispatchEvent(event, properties, configurationKey = activeConfiguration
     }
     try {
         const targets = pendingDestinations(logicalEventId, 'ga4', getActiveGA4MeasurementIds());
-        const delivered = trackToGA4(adapted.ga4.eventName, adapted.ga4.params, targets);
+        const ga4Params = debugMode
+            ? Object.assign(Object.assign({}, adapted.ga4.params), { debug_mode: true }) : adapted.ga4.params;
+        const delivered = trackToGA4(adapted.ga4.eventName, ga4Params, targets);
         markDestinationsDelivered(logicalEventId, 'ga4', delivered);
     }
     catch (error) {
@@ -279,8 +284,9 @@ function markPageViewDelivered(pageView, destination) {
 function deliverPageViewToActiveDestinations(pageView) {
     const properties = Object.assign({ page_location: pageView.page_location }, (pageView.page_title ? { page_title: pageView.page_title } : {}));
     const gaTargets = getActiveGA4MeasurementIds().filter((id) => !hasPageViewBeenDelivered(pageView, `ga4:${id}`));
+    const gaProperties = debugMode ? Object.assign(Object.assign({}, properties), { debug_mode: true }) : properties;
     try {
-        for (const id of trackToGA4('page_view', properties, gaTargets)) {
+        for (const id of trackToGA4('page_view', gaProperties, gaTargets)) {
             markPageViewDelivered(pageView, `ga4:${id}`);
         }
     }
@@ -525,11 +531,13 @@ function exposeGlobalFunctions() {
     window.trackPageView = trackPageView;
     window.sendDineoutEvent = sendDineoutEvent;
 }
-export function DineoutTracking({ companyIdentifier, platform, userId, companyTrackingMode = 'auto', }) {
+export function DineoutTracking({ companyIdentifier, platform, userId, companyTrackingMode = 'auto', debug = false, }) {
     const resolvedPlatform = platform !== null && platform !== void 0 ? platform : detectPlatform();
     const configurationKey = `${resolvedPlatform}:${companyIdentifier !== null && companyIdentifier !== void 0 ? companyIdentifier : '__platform_only__'}`;
     const latestUserId = useRef(userId);
     latestUserId.current = userId;
+    // Kept current every render so a toggle takes effect on the next event.
+    debugMode = debug;
     useEffect(() => {
         exposeGlobalFunctions();
     }, []);
@@ -591,6 +599,7 @@ export function __resetTrackingForTests() {
     successfulConfigurationCount = 0;
     mixpanelDeliveryEnabled = false;
     mixpanelDestinationId = undefined;
+    debugMode = false;
     cachedConversions.clear();
     pageViews.splice(0, pageViews.length);
     deliveredPageViews.clear();

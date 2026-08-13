@@ -809,3 +809,59 @@ describe('Mixpanel dispatch', () => {
         expect(mixpanelMock.track).not.toHaveBeenCalled();
     });
 });
+
+describe('debug mode', () => {
+    it('flags direct GA4 events and page views for DebugView without touching other destinations', async () => {
+        fetchMock.mockResolvedValue(response({
+            ...configA,
+            dineoutMixpanelToken: 'mixpanel-token',
+        }));
+        await renderTracking({
+            companyIdentifier: 'restaurant-a',
+            platform: 'dineout',
+            companyTrackingMode: 'both',
+            debug: true,
+        });
+        gtag.mockClear();
+        fbq.mockClear();
+        mixpanelMock.track.mockClear();
+        const layer = gtmLayer('GTM-A');
+        layer.splice(0);
+
+        trackTakeaway('Takeaway Item Added', commerce);
+        trackPageView('/funkybhangra/order?lng=en', 'Order');
+
+        // Direct GA4 event and page view both carry debug_mode.
+        expect(gtagEvents('add_to_cart')[0]?.[2]).toEqual(
+            expect.objectContaining({ debug_mode: true }),
+        );
+        expect(gtagEvents('page_view')[0]?.[2]).toEqual(
+            expect.objectContaining({ debug_mode: true }),
+        );
+
+        // GTM, Meta, and Mixpanel payloads are left clean.
+        expect(pixelEvents().every((call) => !('debug_mode' in (call[3] as object)))).toBe(true);
+        expect(layer.every((entry) => !('debug_mode' in entry))).toBe(true);
+        expect(
+            mixpanelMock.track.mock.calls.every(
+                (call) => !('debug_mode' in ((call[1] as object) ?? {})),
+            ),
+        ).toBe(true);
+    });
+
+    it('omits debug_mode by default', async () => {
+        fetchMock.mockResolvedValue(response(configA));
+        await renderTracking({ companyIdentifier: 'restaurant-a', platform: 'dineout' });
+        gtag.mockClear();
+
+        trackTakeaway('Takeaway Item Added', commerce);
+        trackPageView('/funkybhangra/order?lng=en', 'Order');
+
+        expect(gtagEvents('add_to_cart')[0]?.[2]).toEqual(
+            expect.not.objectContaining({ debug_mode: expect.anything() }),
+        );
+        expect(gtagEvents('page_view')[0]?.[2]).toEqual(
+            expect.not.objectContaining({ debug_mode: expect.anything() }),
+        );
+    });
+});
