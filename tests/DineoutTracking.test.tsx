@@ -357,6 +357,87 @@ describe('page views, queues, and company switching', () => {
         ]);
     });
 
+    it('delivers a page view recorded while platform-only to the company that activates afterwards, without repeating platform destinations', async () => {
+        const platformConfig: TrackingConfig = {
+            dineoutGATrackingId: 'G-SITE',
+            dineoutFbPixelId: 'PIXEL-SITE',
+        };
+        fetchMock.mockResolvedValueOnce(response(platformConfig));
+        await renderTracking({ platform: 'dineout' });
+
+        // The app records the restaurant page view while the restaurant id is
+        // still resolving, so only platform destinations exist at this point.
+        trackPageView('/funkybhangra/order?lng=en', 'Order');
+        expect(gtagEvents('page_view')).toEqual([[
+            'event',
+            'page_view',
+            expect.objectContaining({ send_to: ['G-SITE'] }),
+        ]]);
+
+        gtag.mockClear();
+        fbq.mockClear();
+
+        // The id resolves and the company configuration activates a beat later.
+        fetchMock.mockResolvedValueOnce(response(configA));
+        await renderTracking({
+            companyIdentifier: 'restaurant-a',
+            platform: 'dineout',
+            companyTrackingMode: 'both',
+        });
+
+        const pageProperties = {
+            page_location: 'https://takeaway.dineout.is/funkybhangra/order?lng=en',
+            page_title: 'Order',
+        };
+
+        // The company's direct GA4/Meta and its GTM now receive the same view...
+        expect(gtagEvents('page_view')).toEqual([[
+            'event',
+            'page_view',
+            { ...pageProperties, send_to: ['G-A'] },
+        ]]);
+        expect(pixelEvents('PageView')).toEqual([
+            ['trackSingle', 'PIXEL-A', 'PageView', pageProperties],
+        ]);
+        expect(gtmLayer('GTM-A').filter((entry) => entry.event === 'page_view')).toEqual([
+            { event: 'page_view', ...pageProperties },
+        ]);
+
+        // ...and the already-delivered platform destinations are not repeated.
+        expect(
+            gtagEvents('page_view').flatMap(
+                (call) => (call[2] as { send_to: string[] }).send_to,
+            ),
+        ).not.toContain('G-SITE');
+        expect(pixelEvents('PageView').map((call) => call[1])).not.toContain('PIXEL-SITE');
+    });
+
+    it('does not attach a page view for a different URL to a company that activates later', async () => {
+        const platformConfig: TrackingConfig = {
+            dineoutGATrackingId: 'G-SITE',
+            dineoutFbPixelId: 'PIXEL-SITE',
+        };
+        fetchMock.mockResolvedValueOnce(response(platformConfig));
+        await renderTracking({ platform: 'dineout' });
+
+        // A page view for a page other than the current location.
+        trackPageView('/somewhere/else', 'Elsewhere');
+        gtag.mockClear();
+        fbq.mockClear();
+
+        fetchMock.mockResolvedValueOnce(response(configA));
+        await renderTracking({
+            companyIdentifier: 'restaurant-a',
+            platform: 'dineout',
+            companyTrackingMode: 'both',
+        });
+
+        // The stale, non-current page view is never leaked to the company.
+        expect(gtagEvents('page_view')).toEqual([]);
+        expect(pixelEvents('PageView')).toEqual([]);
+        expect(gtmLayer('GTM-A').filter((entry) => entry.event === 'page_view')).toEqual([]);
+    });
+
     it('flushes an event fired before the first component into the first configuration', async () => {
         trackTakeaway('Takeaway Item Added', commerce);
         expect(getEventQueue()).toHaveLength(1);

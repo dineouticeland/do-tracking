@@ -471,10 +471,13 @@ function markPageViewDelivered(pageView: PageViewRecord, destination: string): v
     deliveredPageViews.add(pageViewKey(pageView, destination));
 }
 
-function dispatchPageView(pageView: PageViewRecord): void {
-    if (!eventMatchesActiveConfiguration(pageView.configurationKey)) return;
-    if (!pageView.configurationKey) pageView.configurationKey = activeConfigurationKey;
-
+/**
+ * Send a page view to every active destination that has not already received
+ * it. Delivery is deduped per (page-view id, destination), so calling this more
+ * than once for the same page view — for example after a company configuration
+ * activates and adds destinations — never sends a destination a second copy.
+ */
+function deliverPageViewToActiveDestinations(pageView: PageViewRecord): void {
     const properties: TrackingProperties = {
         page_location: pageView.page_location,
         ...(pageView.page_title ? { page_title: pageView.page_title } : {}),
@@ -527,12 +530,44 @@ function dispatchPageView(pageView: PageViewRecord): void {
     }
 }
 
+function dispatchPageView(pageView: PageViewRecord): void {
+    if (!eventMatchesActiveConfiguration(pageView.configurationKey)) return;
+    if (!pageView.configurationKey) pageView.configurationKey = activeConfigurationKey;
+    deliverPageViewToActiveDestinations(pageView);
+}
+
 function latestPageViewForActiveConfiguration(): PageViewRecord | undefined {
     for (let index = pageViews.length - 1; index >= 0; index -= 1) {
         const pageView = pageViews[index];
         if (eventMatchesActiveConfiguration(pageView.configurationKey)) return pageView;
     }
     return undefined;
+}
+
+/**
+ * Deliver the current page's already-recorded page view to destinations that
+ * only just became active.
+ *
+ * A single-page app records a page view on navigation, but a restaurant's
+ * `companyIdentifier` usually resolves a beat later (it is commonly fetched).
+ * By then the page view for the page the user is looking at was stamped with
+ * the previous, platform-only scope, so `latestPageViewForActiveConfiguration`
+ * does not return it and the company's GA4/Meta/GTM never receive the view.
+ *
+ * This re-delivers that same page view — reusing its id, so per-destination
+ * dedup stops it reaching any destination twice (no duplicate platform page
+ * view). The exact current-URL match keeps a page view from ever being attached
+ * to a restaurant the user has already navigated away from; a superseded
+ * configuration never reaches this point because its generation is cancelled.
+ */
+function replayCurrentPageViewForActivatedDestinations(): void {
+    if (typeof window === 'undefined') return;
+    const currentLocation = fullPageLocation(window.location.href);
+    const last = pageViews[pageViews.length - 1];
+    if (!last || last.page_location !== currentLocation) return;
+    // The exact-scope page view is already delivered by the caller's replay.
+    if (eventMatchesActiveConfiguration(last.configurationKey)) return;
+    deliverPageViewToActiveDestinations(last);
 }
 
 function fullPageLocation(url: string): string {
@@ -781,6 +816,7 @@ export function DineoutTracking({
                 flushEventQueue();
                 const pageView = latestPageViewForActiveConfiguration();
                 if (pageView) dispatchPageView(pageView);
+                replayCurrentPageViewForActivatedDestinations();
                 replayConversionsForActiveConfiguration();
                 successfulConfigurationCount += 1;
 
